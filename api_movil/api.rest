@@ -1,0 +1,89 @@
+### Obtener todos los usuarios
+GET http://localhost:8000/Usuario
+
+###
+
+### Crear nuevo usuario
+POST http://localhost:8000/Usuario
+Content-Type: application/json
+
+{
+  "nombre": "Juan Pérez",
+  "email": "juan@mail.com",
+  "password": "123456",
+  "telefono": "3001234567",
+  "direccion": "Calle 123",
+  "id_ciudad": 1,
+  "rol": "admin"
+}
+
+###
+
+### Editar un usuario existente
+PUT http://localhost:8000/Usuario
+Content-Type: application/json
+
+{
+  "id_usuario": 2,
+  "nombre": "Juan Pérez",
+  "email": "juan@mail.com",
+  "password": "654321",
+  "telefono": "3109876543",
+  "direccion": "Av Siempre Viva",
+  "id_ciudad": 2,
+  "rol": "productor"
+}
+
+###
+
+### Eliminar un usuario por ID
+DELETE http://localhost:8000/Usuario/1
+
+
+//___________//_____________//________________//____________________//____________________
+###login
+POST http://localhost:8000/auth/login
+Content-Type: application/json
+
+{
+  "email": "juan@mail.com",
+  "password": "654321"
+}
+
+//___________//_____________//________________//____________________//____________________
+###
+
+GET http://localhost:8000/productos
+
+###
+
+POST http://localhost:8000/productos
+Content-Type: application/json
+
+{
+  "nombre": "Manzanas",
+  "descripcion": "Manzanas rojas frescas",
+  "precio": 3.5,
+  "stock": 100,
+  "id_usuario": 2,
+  "id_ciudad_origen": 1
+}
+
+###
+
+PUT http://localhost:8000/productos
+Content-Type: application/json
+
+{
+  "id_producto": 2,
+  "nombre": "Manzanas",
+  "descripcion": "Manzanas verdes frescas",
+  "precio": 4.0,
+  "stock": 80,
+  "id_usuario": 2,
+  "id_ciudad_origen": 1
+}
+
+###
+
+DELETE http://localhost:8000/productos/1
