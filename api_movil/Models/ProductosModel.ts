@@ -1,7 +1,7 @@
 import { conexion } from "./Conexion.ts";
 
 interface ProductoData {
-    id_producto?: number | null;
+    id_producto: number | null;
     nombre: string;
     descripcion: string;
     precio: number;
@@ -18,17 +18,14 @@ export class ProductosModel {
     }
 
     public async ListarProductos(): Promise<ProductoData[]> {
-        try {
-            const result = await conexion.query("SELECT * FROM productos");
-            if (!result || !result.rows) {
-                return [];
-            }
-            return result.rows;
-        } catch (error) {
-            console.error("Error al listar productos:", error);
-            throw new Error("Error al listar productos");
-        }
+    try {
+      const result = await conexion.query("SELECT * FROM productos");
+      return result as ProductoData[];
+    } catch (error) {
+      console.error("Error al listar productos:", error);
+      throw new Error("Error al listar productos.");
     }
+  }
 
     public async AgregarProducto(): Promise<{ success: boolean; message: string; producto?: ProductoData }> {
         try {
@@ -44,8 +41,7 @@ export class ProductosModel {
 
             await conexion.execute("START TRANSACTION");
 
-            const result = await conexion.execute(
-                "INSERT INTO productos (nombre, descripcion, precio, stock, id_usuario, id_ciudad_origen) VALUES (?, ?, ?, ?, ?, ?)",
+            const result = await conexion.execute("INSERT INTO productos (nombre, descripcion, precio, stock, id_usuario, id_ciudad_origen) VALUES (?, ?, ?, ?, ?, ?)",
                 [nombre, descripcion, precio, stock, id_usuario, id_ciudad_origen]
             );
 
@@ -71,36 +67,41 @@ export class ProductosModel {
     }
 
     public async EditarProducto(): Promise<{ success: boolean; message: string }> {
-        try {
-            if(!this._objProducto || !this._objProducto.id_producto) {
-                throw new Error("No se proporciono un objeto de producto valido.");
-            }
+    try {
+      if (!this._objProducto || !this._objProducto.id_producto) {
+        throw new Error("No se proporcionó un objeto de producto válido.");
+      }
 
-            const { id_producto, nombre, descripcion, precio, stock, id_usuario, id_ciudad_origen } = this._objProducto;
+      const {id_producto, nombre, descripcion, precio, stock, id_usuario, id_ciudad_origen} = this._objProducto;
 
-            await conexion.execute("START TRANSACTION");
+      await conexion.execute("START TRANSACTION");
 
-            const result = await conexion.execute("UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, stock = ?, id_usuario = ?, id_ciudad_origen = ? WHERE id_producto = ?",
-                [nombre, descripcion, precio, stock, id_usuario, id_ciudad_origen, id_producto]
-            );
+      const result = await conexion.execute("UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, stock = ?, id_usuario = ?, id_ciudad_origen = ? WHERE id_producto = ?",
+        [nombre, descripcion, precio, stock, id_usuario, id_ciudad_origen, id_producto]
+      );
 
-            if(result && result.affectedRows && result.affectedRows > 0) {
-                await conexion.execute("COMMIT");
-                return{
-                    success: true,
-                    message: "Producto editado exitosamente."
-                };
-            } else {
-                throw new Error("No se pudo editar el producto.");
-            }
-        } catch (error) {
-            await conexion.execute("ROLLBACK");
-            return{
-                success: false,
-                message: "Error al editar el producto."
-            };
-        }
+      if (result && result.affectedRows && result.affectedRows > 0) {
+        await conexion.execute("COMMIT");
+        return {
+          success: true,
+          message: "Producto editado exitosamente.",
+        };
+      } else {
+        await conexion.execute("ROLLBACK");
+        return {
+          success: false,
+          message: "No se pudo editar el producto.",
+        };
+      }
+    } catch (error) {
+      await conexion.execute("ROLLBACK");
+      console.error("Error al editar producto:", error);
+      return {
+        success: false,
+        message: "Error al editar el producto.",
+      };
     }
+  }
 
     public async EliminarProducto(id_producto: number): Promise<{ success: boolean; message: string }> {
         try {

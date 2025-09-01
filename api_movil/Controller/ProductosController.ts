@@ -12,7 +12,7 @@ const productosSchema = z.object({
 });
 
 const productosUpdateSchema = productosSchema.extend({
-  id_producto: z.number().int().positive("El ID debe ser un número positivo"),
+  id_producto: z.number().int().positive("El ID debe ser un numero positivo"),
 });
 
 export const getProductos = async (ctx: Context) => {
@@ -20,15 +20,16 @@ export const getProductos = async (ctx: Context) => {
     const objProductos = new ProductosModel();
     const lista = await objProductos.ListarProductos();
 
-    ctx.response.status = lista.length > 0 ? 200 : 404;
+    ctx.response.status = 200;
     ctx.response.body = {
-      success: lista.length > 0,
+      success: true,
       message: lista.length > 0
         ? "Productos encontrados."
         : "No se encontraron productos.",
       data: lista,
     };
   } catch (error) {
+    console.error("Error en getProductos:", error);
     ctx.response.status = 500;
     ctx.response.body = {
       success: false,
@@ -50,7 +51,7 @@ export const postProducto = async (ctx: Context) => {
     const objProductos = new ProductosModel(productoData);
     const result = await objProductos.AgregarProducto();
 
-    ctx.response.status = result.success ? 201 : 400;
+    ctx.response.status = result.success ? 200 : 400;
     ctx.response.body = {
       success: result.success,
       message: result.message,
@@ -60,9 +61,7 @@ export const postProducto = async (ctx: Context) => {
     ctx.response.status = 400;
     ctx.response.body = {
       success: false,
-      message: error instanceof z.ZodError
-        ? "Datos inválidos."
-        : "Error al agregar el producto.",
+      message: error instanceof z.ZodError ? "Datos invalidos." : "Error al agregar el producto"
     };
   }
 };
@@ -81,12 +80,11 @@ export const putProducto = async (ctx: Context) => {
       message: result.message,
     };
   } catch (error) {
+    console.error("Error en putProducto:", error);
     ctx.response.status = 400;
     ctx.response.body = {
       success: false,
-      message: error instanceof z.ZodError
-        ? "Datos inválidos."
-        : "Error al actualizar el producto.",
+      message: error instanceof z.ZodError ? "Datos invalidos, problema en el esquema" : "Error al actualizar el producto."
     };
   }
 };

@@ -24,7 +24,7 @@ PUT http://localhost:8000/Usuario
 Content-Type: application/json
 
 {
-  "id_usuario": 2,
+  "id_usuario": 3,
   "nombre": "Juan Pérez",
   "email": "juan@mail.com",
   "password": "654321",
@@ -37,7 +37,7 @@ Content-Type: application/json
 ###
 
 ### Eliminar un usuario por ID
-DELETE http://localhost:8000/Usuario/1
+DELETE http://localhost:8000/Usuario/2
 
 
 //___________//_____________//________________//____________________//____________________
@@ -47,43 +47,160 @@ Content-Type: application/json
 
 {
   "email": "juan@mail.com",
-  "password": "654321"
+  "password": "123456789"
 }
 
 //___________//_____________//________________//____________________//____________________
-###
+### Obtener todos los productos
 
 GET http://localhost:8000/productos
 
-###
+### Agregar un nuevo producto
 
 POST http://localhost:8000/productos
 Content-Type: application/json
 
 {
   "nombre": "Manzanas",
-  "descripcion": "Manzanas rojas frescas",
+  "descripcion": "Manzanas rojas y verdes frescas",
   "precio": 3.5,
   "stock": 100,
-  "id_usuario": 2,
+  "id_usuario": 3,
   "id_ciudad_origen": 1
 }
 
-###
+### Editar un producto existente
 
 PUT http://localhost:8000/productos
 Content-Type: application/json
 
 {
-  "id_producto": 2,
+  "id_producto": 3,
   "nombre": "Manzanas",
   "descripcion": "Manzanas verdes frescas",
   "precio": 4.0,
   "stock": 80,
-  "id_usuario": 2,
+  "id_usuario": 1,
   "id_ciudad_origen": 1
 }
 
-###
+### Eliminar un producto por ID
 
-DELETE http://localhost:8000/productos/1
+DELETE http://localhost:8000/productos/3
+
+//___________//_____________//________________//____________________//____________________
+
+### Obtener todas las regiones
+GET http://localhost:8000/regiones
+
+### Agregar una nueva region
+POST http://localhost:8000/regiones
+Content-Type: application/json
+
+{
+  "nombre": "Región Andina"
+}
+
+### Editar una región existente
+PUT http://localhost:8000/regiones
+Content-Type: application/json
+
+{
+  "id_region": 7,
+  "nombre": "Región Editada"
+}
+
+
+
+### Eliminar una región por ID
+DELETE http://localhost:8000/regiones/7
+
+//___________//_____________//________________//____________________//____________________
+### Obtener todos los departamentos
+GET http://localhost:8000/departamentos
+
+### Agregar un nuevo departamento
+POST http://localhost:8000/departamentos
+Content-Type: application/json
+
+{
+  "nombre": "Departamento de Prueba",
+  "id_region": 1
+}
+
+### Editar un departamento existente
+PUT http://localhost:8000/departamentos
+Content-Type: application/json
+
+{
+  "id_departamento": 34,
+  "nombre": "Departamento Editado",
+  "id_region": 2
+}
+
+### Eliminar un departamento por ID
+DELETE http://localhost:8000/departamentos/34
+
+//___________//_____________//________________//____________________//____________________
+
+### Obtener todas las ciudades
+GET http://localhost:8000/ciudades
+
+### Agregar una nueva ciudad
+POST http://localhost:8000/ciudades
+Content-Type: application/json
+
+{
+  "nombre": "Ciudad de Prueba",
+  "id_departamento": 1
+}
+
+### Editar una ciudad existente
+PUT http://localhost:8000/ciudades
+Content-Type: application/json
+
+{
+  "id_ciudad": 33,
+  "nombre": "Ciudad Editada",
+  "id_departamento": 2
+}
+
+### Eliminar una ciudad por ID
+DELETE http://localhost:8000/ciudades/33
+
+//___________//_____________//________________//____________________//____________________
+### Obtener todas las alertas de stock
+GET http://localhost:8000/alertas
+
+### Agregar una nueva alerta de stock
+POST http://localhost:8000/alertas
+Content-Type: application/json
+
+{
+  "id_producto": 2,
+  "stock_actual": 8,
+  "fecha": "2024-10-01T10:00:00Z",
+  "mensaje": "El stock del producto es bajo."
+}
+
+### Eliminar una alerta de stock por ID
+DELETE http://localhost:8000/alertas/3
+//___________//_____________//________________//____________________//____________________
+
+### Obtener todos los detalles de pedidos
+GET http://localhost:8000/detalle_pedidos
+
+### Agregar un nuevo detalle de pedido
+POST http://localhost:8000/detalle_pedidos
+Content-Type: application/json
+
+{
+  "id_pedido": 1,
+  "id_producto": 2,
+  "cantidad": 85,
+  "precio_unitario": 3.500,
+  "precio_total": 297500
+}
+
+### Eliminar un detalle de pedido por ID
+DELETE http://localhost:8000/detalle_pedidos/1
