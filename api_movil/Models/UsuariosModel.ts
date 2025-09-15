@@ -36,7 +36,7 @@ export class Usuario {
   public async InsertarUsuario(): Promise<{ success: boolean; message: string; usuario?: Record<string, unknown> }> {
     try {
       if (!this._objUsuario) {
-        throw new Error("No se ha proporcionado un objeto válido.");
+        throw new Error("No se ha proporcionado un objeto valido.");
       }
 
       const { nombre, email, password, telefono, direccion, id_ciudad, rol } = this._objUsuario;
@@ -59,7 +59,7 @@ export class Usuario {
 
         return {
           success: true,
-          message: "Usuario insertado con éxito.",
+          message: "Usuario insertado con exito.",
           usuario: usuario,
         };
       } else {
@@ -88,7 +88,7 @@ export class Usuario {
           message: "Usuario eliminado correctamente.",
         };
       } else {
-        throw new Error("No se encontró el usuario a eliminar.");
+        throw new Error("No se encontro el usuario a eliminar.");
       }
     } catch (error) {
       await conexion.execute("ROLLBACK");
@@ -103,7 +103,7 @@ export class Usuario {
   public async EditarUsuario(): Promise<{ success: boolean; message: string }> {
     try {
       if (!this._objUsuario || !this._objUsuario.id_usuario) {
-        throw new Error("No se ha proporcionado un usuario válido con ID.");
+        throw new Error("No se ha proporcionado un usuario valido con ID.");
       }
 
       const { id_usuario, nombre, email, password, telefono, direccion, id_ciudad, rol } = this._objUsuario;
@@ -122,7 +122,7 @@ export class Usuario {
           message: "Usuario actualizado correctamente.",
         };
       } else {
-        throw new Error("No se pudo actualizar el usuario o no se encontró.");
+        throw new Error("No se pudo actualizar el usuario o no se encontro.");
       }
     } catch (error) {
       await conexion.execute("ROLLBACK");

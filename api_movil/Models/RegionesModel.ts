@@ -31,7 +31,7 @@ export class RegionesModel {
       const { nombre } = this._objRegion;
 
       if (!nombre || nombre.trim() === "") {
-        throw new Error("El nombre de la región es obligatorio.");
+        throw new Error("El nombre de la region es obligatorio.");
       }
 
       await conexion.execute("START TRANSACTION");
@@ -49,22 +49,22 @@ export class RegionesModel {
 
         return {
           success: true,
-          message: "Región agregada exitosamente.",
+          message: "Region agregada exitosamente.",
           region: queryResult?.[0] as RegionData,
         };
       } else {
         await conexion.execute("ROLLBACK");
         return {
           success: false,
-          message: "No se pudo agregar la región.",
+          message: "No se pudo agregar la region.",
         };
       }
     } catch (error) {
       await conexion.execute("ROLLBACK");
-      console.error("Error al agregar región:", error);
+      console.error("Error al agregar region:", error);
       return {
         success: false,
-        message: "Error al agregar región.",
+        message: "Error al agregar region.",
       };
     }
   }
@@ -72,7 +72,7 @@ export class RegionesModel {
   public async EditarRegion(): Promise<{ success: boolean; message: string }> {
     try {
       if (!this._objRegion || !this._objRegion.id_region) {
-        throw new Error("No se proporcionó un objeto de región válido.");
+        throw new Error("No se proporciono un objeto de region valido.");
       }
 
       const { id_region, nombre } = this._objRegion;
@@ -87,21 +87,21 @@ export class RegionesModel {
         await conexion.execute("COMMIT");
         return {
           success: true,
-          message: "Región editada exitosamente.",
+          message: "Region editada exitosamente.",
         };
       } else {
         await conexion.execute("ROLLBACK");
         return {
           success: false,
-          message: "No se pudo editar la región.",
+          message: "No se pudo editar la region.",
         };
       }
     } catch (error) {
       await conexion.execute("ROLLBACK");
-      console.error("Error al editar región:", error);
+      console.error("Error al editar region:", error);
       return {
         success: false,
-        message: "Error al editar la región.",
+        message: "Error al editar la region.",
       };
     }
   }
@@ -118,21 +118,21 @@ export class RegionesModel {
         await conexion.execute("COMMIT");
         return {
           success: true,
-          message: "Región eliminada exitosamente.",
+          message: "Region eliminada exitosamente.",
         };
       } else {
         await conexion.execute("ROLLBACK");
         return {
           success: false,
-          message: "No se pudo eliminar la región.",
+          message: "No se pudo eliminar la region.",
         };
       }
     } catch (error) {
       await conexion.execute("ROLLBACK");
-      console.error("Error al eliminar región:", error);
+      console.error("Error al eliminar region:", error);
       return {
         success: false,
-        message: "Error al eliminar la región.",
+        message: "Error al eliminar la region.",
       };
     }
   }

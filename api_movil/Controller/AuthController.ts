@@ -32,7 +32,7 @@ export class AuthController {
 
       if (!usuario || usuario.password !== password) {
         ctx.response.status = 401;
-        ctx.response.body = { error: "Credenciales inválidas" };
+        ctx.response.body = { error: "Credenciales invalidas" };
         return;
       }
 

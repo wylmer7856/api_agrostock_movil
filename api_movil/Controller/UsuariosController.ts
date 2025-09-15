@@ -15,7 +15,7 @@ const usuarioSchema = z.object({
 });
 
 const usuarioSchemaUpdate = usuarioSchema.extend({
-  id_usuario: z.number().int().positive("El ID debe ser un número positivo"),
+  id_usuario: z.number().int().positive("El ID debe ser un numero positivo"),
 });
 
 export const getUsuarios = async (ctx: Context) => {
@@ -51,7 +51,7 @@ export const postUsuario = async (ctx: Context) => {
     const objUsuario = new Usuario(usuarioData);
     const result = await objUsuario.InsertarUsuario();
 
-    ctx.response.status = result.success ? 201 : 400;
+    ctx.response.status = result.success ? 200 : 400;
     ctx.response.body = {
       success: result.success,
       message: result.message,
@@ -61,7 +61,7 @@ export const postUsuario = async (ctx: Context) => {
     ctx.response.status = 400;
     ctx.response.body = {
       success: false,
-      message: error instanceof z.ZodError ? "Datos inválidos." : "Error al insertar el usuario.",
+      message: error instanceof z.ZodError ? "Datos invalidos." : "Error al insertar el usuario.",
     };
   }
 };
@@ -83,7 +83,7 @@ export const putUsuario = async (ctx: Context) => {
     ctx.response.status = 400;
     ctx.response.body = {
       success: false,
-      message: error instanceof z.ZodError ? "Datos inválidos." : "Error al actualizar el usuario.",
+      message: error instanceof z.ZodError ? "Datos invalidos." : "Error al actualizar el usuario.",
     };
   }
 };
@@ -95,7 +95,7 @@ export const deleteUsuario = async (ctx: RouterContext<"/Usuario/:id">) => {
       ctx.response.status = 400;
       ctx.response.body = {
         success: false,
-        message: "ID de usuario inválido.",
+        message: "ID de usuario invalido.",
       };
       return;
     }

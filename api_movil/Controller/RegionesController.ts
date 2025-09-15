@@ -91,7 +91,7 @@ export const deleteRegiones = async (ctx: RouterContext<"/regiones/:id">) => {
       ctx.response.status = 400;
       ctx.response.body = {
         success: false,
-        message: "ID de región inválido.",
+        message: "ID de region invalido.",
       };
       return;
     }

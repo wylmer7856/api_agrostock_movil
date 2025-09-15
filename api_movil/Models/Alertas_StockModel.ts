@@ -1,4 +1,5 @@
 import { conexion } from "./Conexion.ts";
+import { ProductoData } from "./ProductosModel.ts";
 
 interface AlertaData {
   id_alerta: number | null;
@@ -17,7 +18,7 @@ export class AlertasModel {
 
   public async ListarAlertas(): Promise<AlertaData[]> {
     try {
-      const result = await conexion.query("SELECT * FROM alertas_stock");
+      const result = await conexion.query(`SELECT a.*, p.nombre as nombre_producto FROM alertas_stock a LEFT JOIN productos p ON a.id_producto = p.id_producto ORDER BY a.fecha DESC`);
       return result as AlertaData[];
     } catch (error) {
       console.error("Error al listar alertas:", error);
@@ -25,43 +26,116 @@ export class AlertasModel {
     }
   }
 
-  public async AgregarAlerta(): Promise<{ success: boolean; message: string; alerta?: AlertaData }> {
+  public async ListarAlertasActivas(): Promise<AlertaData[]> {
     try {
-      if (!this._objAlerta) throw new Error("No se proporcionó un objeto de alerta.");
 
-      const { id_producto, stock_actual, fecha, mensaje } = this._objAlerta;
+      const result = await conexion.query(`SELECT a.*, p.nombre as nombre_producto FROM alertas_stock a LEFT JOIN productos p ON a.id_producto = p.id_producto WHERE DATE(a.fecha) >= DATE(NOW() - INTERVAL 7 DAY) ORDER BY a.fecha DESC`);
+      return result as AlertaData[];
+    } catch (error) {
+      console.error("Error al listar alertas activas:", error);
+      throw new Error("Error al listar alertas activas.");
+    }
+  }
 
-      if (!id_producto || stock_actual === undefined || !fecha || !mensaje) {
-        throw new Error("Faltan campos obligatorios.");
+  private async CrearAlerta(producto: ProductoData): Promise<void> {
+    try {
+      let mensaje = '';
+
+      if (producto.stock === 0) {
+        mensaje = `¡URGENTE! El producto "${producto.nombre}" esta sin stock.`;
+      } else if (producto.stock <= Math.floor(producto.stockMinimo * 0.5)) {
+        mensaje = `¡CRiTICO! El producto "${producto.nombre}" tiene stock critico (${producto.stock} unidades).`;
+      } else if (producto.stock <= producto.stockMinimo) {
+        mensaje = `¡ATENCIoN! El producto "${producto.nombre}" tiene stock bajo (${producto.stock} unidades).`;
+      } else {
+        return;
       }
 
+      const fecha = new Date().toISOString().split('T')[0];
+
+      await conexion.execute(`INSERT INTO alertas_stock (id_producto, stock_actual, fecha, mensaje) VALUES (?, ?, ?, ?)`, 
+        [
+        producto.id_producto,
+        producto.stock,
+        fecha,
+        mensaje
+      ]);
+
+    } catch (error) {
+      console.error(`Error al crear alerta para producto ${producto.id_producto}:`, error);
+    }
+  }
+
+  private async ExisteAlertaReciente(idProducto: number): Promise<boolean> {
+    try {
+
+      const result = await conexion.query(`SELECT COUNT(*) as count FROM alertas_stock WHERE id_producto = ? AND DATE(fecha) = CURDATE()`, 
+        [idProducto]
+      );
+
+      return result[0].count > 0;
+    } catch (error) {
+      console.error("Error al verificar alerta existente:", error);
+      return false;
+    }
+  }
+
+  public async GenerarAlertasAutomaticas(): Promise<{ alertasCreadas: number; mensaje: string }> {
+    try {
       await conexion.execute("START TRANSACTION");
 
-      const result = await conexion.execute("INSERT INTO alertas_stock (id_producto, stock_actual, fecha, mensaje) VALUES (?, ?, ?, ?)",
-        [id_producto, stock_actual, fecha, mensaje]
+      const productos = await conexion.query(`SELECT id_producto, nombre, stock, stockMinimo FROM productos WHERE stock <= stockMinimo OR stock = 0`) as ProductoData[];
+
+      let alertasCreadas = 0;
+
+      for (const producto of productos) {
+
+        const existeAlertaReciente = await this.ExisteAlertaReciente(producto.id_producto);
+        
+        if (!existeAlertaReciente) {
+          await this.CrearAlerta(producto);
+          alertasCreadas++;
+        }
+      }
+
+      await conexion.execute("COMMIT");
+
+      return {
+        alertasCreadas,
+        mensaje: alertasCreadas > 0 ? `Se crearon ${alertasCreadas} nuevas alertas de stock.` : "No se encontraron productos que requieran alertas nuevas."
+      };
+
+    } catch (error) {
+      await conexion.execute("ROLLBACK");
+      console.error("Error al generar alertas automaticas:", error);
+      throw new Error("Error al generar alertas automaticas.");
+    }
+  }
+
+  public async MarcarAlertaComoResuelta(id_alerta: number): Promise<{ success: boolean; message: string }> {
+    try {
+
+      const result = await conexion.execute("UPDATE alertas_stock SET mensaje = CONCAT('[RESUELTA] ', mensaje) WHERE id_alerta = ? AND mensaje NOT LIKE '[RESUELTA]%'",
+        [id_alerta]
       );
 
       if (result && result.affectedRows && result.affectedRows > 0) {
-        const queryResult = await conexion.query("SELECT * FROM alertas_stock ORDER BY id_alerta DESC LIMIT 1");
-
-        await conexion.execute("COMMIT");
-
         return {
           success: true,
-          message: "Alerta agregada exitosamente.",
-          alerta: queryResult?.[0] as AlertaData,
+          message: "Alerta marcada como resuelta.",
         };
       } else {
-        await conexion.execute("ROLLBACK");
-        return { 
-            success: false,
-            message: "No se pudo agregar la alerta"
+        return {
+          success: false,
+          message: "No se encontro la alerta o ya estaba resuelta.",
         };
       }
     } catch (error) {
-      await conexion.execute("ROLLBACK");
-      console.error("Error al agregar alerta:", error);
-      return { success: false, message: "Error al agregar alerta." };
+      console.error("Error al marcar alerta como resuelta:", error);
+      return {
+        success: false,
+        message: "Error al marcar la alerta como resuelta.",
+      };
     }
   }
 

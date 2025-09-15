@@ -3,11 +3,11 @@ import { DepartamentosModel } from "../Models/DepartamentosModel.ts";
 
 const departamentoSchema = z.object({
   nombre: z.string().min(1),
-  id_region: z.number().int().positive("ID de región debe ser positivo."),
+  id_region: z.number().int().positive("ID de region debe ser positivo."),
 });
 
 const departamentoUpdateSchema = departamentoSchema.extend({
-  id_departamento: z.number().int().positive("ID de departamento inválido."),
+  id_departamento: z.number().int().positive("ID de departamento invalido."),
 });
 
 export const getDepartamentos = async (ctx: Context) => {

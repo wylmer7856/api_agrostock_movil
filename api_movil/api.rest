@@ -8,7 +8,7 @@ POST http://localhost:8000/Usuario
 Content-Type: application/json
 
 {
-  "nombre": "Juan Pérez",
+  "nombre": "Juan Perez",
   "email": "juan@mail.com",
   "password": "123456",
   "telefono": "3001234567",
@@ -25,7 +25,7 @@ Content-Type: application/json
 
 {
   "id_usuario": 3,
-  "nombre": "Juan Pérez",
+  "nombre": "Juan Perez",
   "email": "juan@mail.com",
   "password": "654321",
   "telefono": "3109876543",
@@ -51,42 +51,47 @@ Content-Type: application/json
 }
 
 //___________//_____________//________________//____________________//____________________
-### Obtener todos los productos
-
+### Obtener un producto por ID
 GET http://localhost:8000/productos
 
 ### Agregar un nuevo producto
-
 POST http://localhost:8000/productos
 Content-Type: application/json
 
 {
-  "nombre": "Manzanas",
-  "descripcion": "Manzanas rojas y verdes frescas",
-  "precio": 3.5,
-  "stock": 100,
-  "id_usuario": 3,
-  "id_ciudad_origen": 1
+  "nombre": "Tomates Cherry",
+  "descripcion": "Tomates cherry frescos y organicos",
+  "precio": 4.2,
+  "stock": 50,
+  "stockMinimo": 10,
+  "id_usuario": 1,
+  "id_ciudad_origen": 1,
+  "unidadMedida": "kg",
+  "pesoAprox": 0.02,
+  "imagenData": "file:///C:/Users/jbarr/Pictures/nirvana.png"
 }
 
 ### Editar un producto existente
 
-PUT http://localhost:8000/productos
+PUT http://localhost:8000/productos/7
 Content-Type: application/json
 
 {
-  "id_producto": 3,
-  "nombre": "Manzanas",
-  "descripcion": "Manzanas verdes frescas",
-  "precio": 4.0,
+  "nombre": "Manzanas Verdes Premium",
+  "descripcion": "Manzanas verdes premium de alta calidad",
+  "precio": 4.5,
   "stock": 80,
+  "stockMinimo": 20,
   "id_usuario": 1,
-  "id_ciudad_origen": 1
+  "id_ciudad_origen": 1,
+  "unidadMedida": "kg",
+  "pesoAprox": 0.18,
+  "imagenData": "file:///C:/Users/jbarr/Pictures/Banda.png"
 }
 
 ### Eliminar un producto por ID
+DELETE http://localhost:8000/productos/7
 
-DELETE http://localhost:8000/productos/3
 
 //___________//_____________//________________//____________________//____________________
 
@@ -98,21 +103,21 @@ POST http://localhost:8000/regiones
 Content-Type: application/json
 
 {
-  "nombre": "Región Andina"
+  "nombre": "Region Andina"
 }
 
-### Editar una región existente
+### Editar una region existente
 PUT http://localhost:8000/regiones
 Content-Type: application/json
 
 {
   "id_region": 7,
-  "nombre": "Región Editada"
+  "nombre": "Region Editada"
 }
 
 
 
-### Eliminar una región por ID
+### Eliminar una region por ID
 DELETE http://localhost:8000/regiones/7
 
 //___________//_____________//________________//____________________//____________________
@@ -169,22 +174,27 @@ Content-Type: application/json
 DELETE http://localhost:8000/ciudades/33
 
 //___________//_____________//________________//____________________//____________________
-### Obtener todas las alertas de stock
+
+###obtener todas las alertas
 GET http://localhost:8000/alertas
 
-### Agregar una nueva alerta de stock
-POST http://localhost:8000/alertas
+### Obtener alertas activas (ultimos 7 dias)
+GET http://localhost:8000/alertas/activas
+
+### Generar alertas automaticas
+POST http://localhost:8000/alertas/generar
 Content-Type: application/json
 
-{
-  "id_producto": 2,
-  "stock_actual": 8,
-  "fecha": "2024-10-01T10:00:00Z",
-  "mensaje": "El stock del producto es bajo."
-}
+###
 
-### Eliminar una alerta de stock por ID
-DELETE http://localhost:8000/alertas/3
+### Marcar alerta como resuelta (cambiar el ID por uno existente)
+PUT http://localhost:8000/alertas/1/resolver
+Content-Type: application/json
+###
+
+### Eliminar una alerta por ID (cambiar el ID por uno existente)
+DELETE http://localhost:8000/alertas/2
+
 //___________//_____________//________________//____________________//____________________
 
 ### Obtener todos los detalles de pedidos

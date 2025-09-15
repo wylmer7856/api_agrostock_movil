@@ -29,7 +29,7 @@ export class DetallePedidosModel {
   public async AgregarDetalle(): Promise<{ success: boolean; message: string; detalle?: DetallePedidoData }> {
     try {
       if (!this._objDetalle) {
-        throw new Error("No se proporcionó un objeto de detalle.");
+        throw new Error("No se proporciono un objeto de detalle.");
       }
 
       const { id_pedido, id_producto, cantidad, precio_unitario, precio_total } = this._objDetalle;

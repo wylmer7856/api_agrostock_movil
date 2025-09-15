@@ -1,12 +1,5 @@
-import { Context, RouterContext, z } from "../Dependencies/dependencias.ts";
+import { Context, RouterContext } from "../Dependencies/dependencias.ts";
 import { AlertasModel } from "../Models/Alertas_StockModel.ts";
-
-const alertaSchema = z.object({
-  id_producto: z.number().int().positive("ID de producto inválido."),
-  stock_actual: z.number().int().min(0),
-  fecha: z.string().min(1),
-  mensaje: z.string().min(1),
-});
 
 export const getAlertas = async (ctx: Context) => {
   try {
@@ -29,31 +22,74 @@ export const getAlertas = async (ctx: Context) => {
   }
 };
 
-export const postAlerta = async (ctx: Context) => {
+export const getAlertasActivas = async (ctx: Context) => {
   try {
-    const body = await ctx.request.body.json();
-    const validated = alertaSchema.parse(body);
+    const model = new AlertasModel();
+    const lista = await model.ListarAlertasActivas();
 
-    const data = {
-      id_alerta: null,
-      ...validated,
+    ctx.response.status = 200;
+    ctx.response.body = {
+      success: true,
+      message: lista.length > 0 ? "Alertas activas encontradas." : "No hay alertas activas.",
+      data: lista,
     };
+  } catch (error) {
+    console.error("Error en getAlertasActivas:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      message: "Error interno del servidor.",
+    };
+  }
+};
 
-    const model = new AlertasModel(data);
-    const result = await model.AgregarAlerta();
+export const generarAlertasAutomaticas = async (ctx: Context) => {
+  try {
+    const model = new AlertasModel();
+    const result = await model.GenerarAlertasAutomaticas();
 
-    ctx.response.status = result.success ? 200 : 400;
+    ctx.response.status = 200;
+    ctx.response.body = {
+      success: true,
+      message: result.mensaje,
+      alertasCreadas: result.alertasCreadas,
+    };
+  } catch (error) {
+    console.error("Error en generarAlertasAutomaticas:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      message: "Error al generar alertas automaticas.",
+    };
+  }
+};
+
+export const marcarAlertaResuelta = async (ctx: RouterContext<"/alertas/:id/resolver">) => {
+  try {
+    const id_alerta = Number(ctx.params.id);
+    if (isNaN(id_alerta) || id_alerta <= 0) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        success: false,
+        message: "ID de alerta invalido.",
+      };
+      return;
+    }
+
+    const model = new AlertasModel();
+    const result = await model.MarcarAlertaComoResuelta(id_alerta);
+
+    ctx.response.status = result.success ? 200 : 404;
     ctx.response.body = {
       success: result.success,
       message: result.message,
-      data: result.alerta,
     };
   } catch (error) {
-    console.error("Error en postAlerta:", error);
-    ctx.response.status = 400;
+    console.error("Error en marcarAlertaResuelta:", error);
+    ctx.response.status = 500;
     ctx.response.body = {
       success: false,
-      message: error instanceof z.ZodError ? "Datos inválidos" : "Error al agregar la alerta."
+      message: "Error interno del servidor.",
     };
   }
 };
@@ -65,7 +101,7 @@ export const deleteAlerta = async (ctx: RouterContext<"/alertas/:id">) => {
       ctx.response.status = 400;
       ctx.response.body = {
         success: false,
-        message: "ID de alerta inválido.",
+        message: "ID de alerta invalido.",
       };
       return;
     }

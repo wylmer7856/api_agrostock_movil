@@ -55,7 +55,7 @@ export const postCiudades = async (ctx: Context) => {
     ctx.response.status = 400;
     ctx.response.body = {
       success: false,
-      message: error instanceof z.ZodError ? "Datos inválidos" : "Error al agregar la ciudad."
+      message: error instanceof z.ZodError ? "Datos invalidos" : "Error al agregar la ciudad."
     };
   }
 };

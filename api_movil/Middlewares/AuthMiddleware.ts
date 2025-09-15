@@ -15,7 +15,7 @@ const key = await crypto.subtle.importKey(
   ["sign", "verify"],
 );
 
-// Middleware de autenticación
+// Middleware de autenticacion
 export async function AuthMiddleware(ctx: Context, next: () => Promise<unknown>) {
   const headers = ctx.request.headers;
   const authorization = headers.get("Authorization");
@@ -30,7 +30,7 @@ export async function AuthMiddleware(ctx: Context, next: () => Promise<unknown>)
 
   if (scheme !== "Bearer" || !token) {
     ctx.response.status = 401;
-    ctx.response.body = { error: "Formato de autorización inválido" };
+    ctx.response.body = { error: "Formato de autorizacion invalido" };
     return;
   }
 
@@ -42,6 +42,6 @@ export async function AuthMiddleware(ctx: Context, next: () => Promise<unknown>)
     await next();
   } catch (_e) {
     ctx.response.status = 401;
-    ctx.response.body = { error: "Token inválido o expirado" };
+    ctx.response.body = { error: "Token invalido o expirado" };
   }
 }
