@@ -68,7 +68,7 @@ Content-Type: application/json
   "id_ciudad_origen": 1,
   "unidadMedida": "kg",
   "pesoAprox": 0.02,
-  "imagenData": "file:///C:/Users/jbarr/Pictures/nirvana.png"
+  "imagenData": "file:///C:/Users/jbarr/Pictures/"
 }
 
 ### Editar un producto existente
@@ -86,7 +86,7 @@ Content-Type: application/json
   "id_ciudad_origen": 1,
   "unidadMedida": "kg",
   "pesoAprox": 0.18,
-  "imagenData": "file:///C:/Users/jbarr/Pictures/Banda.png"
+  "imagenData": "file:///C:/Users/jbarr/Pictures/"
 }
 
 ### Eliminar un producto por ID
