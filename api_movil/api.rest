@@ -217,6 +217,7 @@ Content-Type: application/json
 DELETE http://localhost:8000/detalle_pedidos/1
 
 
+
 //___________//_____________//________________//____________________//____________________
 
 ### Obtener todas las reseñas
@@ -249,3 +250,39 @@ Content-Type: application/json
 
 ### Eliminar una reseña por ID
 DELETE http://localhost:8000/resenas/7
+
+//___________//_____________//________________//____________________//____________________
+### Obtener todos los consejos
+GET http://localhost:8000/Consejo
+
+###
+
+### Crear nuevo consejo
+POST http://localhost:8000/Consejo
+Content-Type: application/json
+
+{
+  "id_usuario": 2,
+  "titulo": "Consejo para sembrar tomates",
+  "contenido": "Usa abono orgánico y riega temprano en la mañana para mejores resultados.",
+  "fecha": "2025-09-18"
+}
+
+###
+
+### Editar un consejo existente
+PUT http://localhost:8000/Consejo
+Content-Type: application/json
+
+{
+  "id_consejo": 3,
+  "id_usuario": 1,
+  "titulo": "Consejo actualizado para sembrar tomates",
+  "contenido": "Mantén el suelo húmedo pero evita el exceso de agua.",
+  "fecha": "2025-09-18"
+}
+
+###
+
+### Eliminar un consejo por ID
+DELETE http://localhost:8000/Consejo/2
