@@ -37,6 +37,7 @@ export async function AuthMiddleware(ctx: Context, next: () => Promise<unknown>)
   try {
     // Verificar el token
     const payload = await verify(token, key);
+    
     // Guardamos el payload en el contexto para usarlo en los controladores
     ctx.state.user = payload;
     await next();

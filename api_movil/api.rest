@@ -173,6 +173,7 @@ Content-Type: application/json
 ### Eliminar una ciudad por ID
 DELETE http://localhost:8000/ciudades/33
 
+
 //___________//_____________//________________//____________________//____________________
 
 ###obtener todas las alertas
@@ -214,3 +215,37 @@ Content-Type: application/json
 
 ### Eliminar un detalle de pedido por ID
 DELETE http://localhost:8000/detalle_pedidos/1
+
+
+//___________//_____________//________________//____________________//____________________
+
+### Obtener todas las reseñas
+GET http://localhost:8000/resenas
+
+### Agregar una nueva reseña
+POST http://localhost:8000/resenas
+Content-Type: application/json
+
+{
+  "id_producto": 10,
+  "id_pedido": 5,
+  "comentario": "Excelente productp esta en perfecto estado",
+  "calificacion": 5,
+  "fecha": "2025-09-18"
+}
+
+### Editar una reseña existente
+PUT http://localhost:8000/resenas
+Content-Type: application/json
+
+{
+  "id_resena": 7,
+  "id_producto": 10,
+  "id_pedido": 5,
+  "comentario": "El producto es bueno pero tardo en llegar",
+  "calificacion": 4,
+  "fecha": "2025-09-18"
+}
+
+### Eliminar una reseña por ID
+DELETE http://localhost:8000/resenas/7
