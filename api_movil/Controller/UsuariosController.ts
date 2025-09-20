@@ -116,3 +116,34 @@ export const deleteUsuario = async (ctx: RouterContext<"/Usuario/:id">) => {
     };
   }
 };
+
+export const filtrarUsuarios = async (ctx: Context) => {
+  try {
+    const ciudad = ctx.request.url.searchParams.get("ciudad");
+const departamento = ctx.request.url.searchParams.get("departamento");
+const region = ctx.request.url.searchParams.get("region");
+
+    const objUsuario = new Usuario();
+    const lista = await objUsuario.FiltrarUsuarios({
+      ciudad: ciudad || null,
+      departamento: departamento || null,
+      region: region || null,
+    });
+
+    ctx.response.status = lista.length > 0 ? 200 : 404;
+    ctx.response.body = {
+      success: lista.length > 0,
+      message: lista.length > 0
+        ? "Usuarios encontrados con filtros."
+        : "No se encontraron usuarios.",
+      data: lista,
+    };
+  } catch (error) {
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      message: "Error interno del servidor al filtrar usuarios.",
+    };
+  }
+};
+

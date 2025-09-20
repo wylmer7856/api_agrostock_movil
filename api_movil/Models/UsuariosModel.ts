@@ -146,4 +146,50 @@ export class Usuario {
       return null;
     }
   }
+
+  // 📌 Filtrar usuarios por ciudad
+  public async FiltrarPorCiudad(id_ciudad: number): Promise<UsuarioData[]> {
+    try {
+      const result = await conexion.query("SELECT * FROM usuarios WHERE id_ciudad = ?", [id_ciudad]);
+      return result as UsuarioData[];
+    } catch (error) {
+      console.error("Error al filtrar usuarios por ciudad: ", error);
+      return [];
+    }
+  }
+
+  // 📌 Filtrar usuarios por departamento
+  public async FiltrarPorDepartamento(id_departamento: number): Promise<UsuarioData[]> {
+    try {
+      const result = await conexion.query(
+        `SELECT u.* 
+         FROM usuarios u
+         INNER JOIN ciudades c ON u.id_ciudad = c.id_ciudad
+         WHERE c.id_departamento = ?`,
+        [id_departamento]
+      );
+      return result as UsuarioData[];
+    } catch (error) {
+      console.error("Error al filtrar usuarios por departamento: ", error);
+      return [];
+    }
+  }
+
+  // 📌 Filtrar usuarios por región
+  public async FiltrarPorRegion(id_region: number): Promise<UsuarioData[]> {
+    try {
+      const result = await conexion.query(
+        `SELECT u.* 
+         FROM usuarios u
+         INNER JOIN ciudades c ON u.id_ciudad = c.id_ciudad
+         INNER JOIN departamentos d ON c.id_departamento = d.id_departamento
+         WHERE d.id_region = ?`,
+        [id_region]
+      );
+      return result as UsuarioData[];
+    } catch (error) {
+      console.error("Error al filtrar usuarios por región: ", error);
+      return [];
+    }
+  }
 }
