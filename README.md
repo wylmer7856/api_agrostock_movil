@@ -1,65 +1,58 @@
-## Imágenes de apoyo
+## API Agrostock Móvil
 
-A continuación se muestran ejemplos de imágenes que puedes agregar para complementar la documentación:
+Este proyecto consiste en una API desarrollada con Deno para la gestión integral de Agrostock, orientada a aplicaciones móviles y web. El sistema permite la administración de usuarios, productos, pedidos, reseñas, alertas de stock y localizaciones geográficas, facilitando la interoperabilidad entre plataformas y brindando un entorno escalable y seguro para la gestión agrícola digital.
 
-### Diagrama de arquitectura
+# Instalación y ejecución
 
+***Instalar Deno***
+1. en su entorno de desarrollo.
+2.  Clonar este repositorio mediante git clone.
+3. Configurar las variables de entorno en el archivo .env para la conexión con la base de datos y parámetros de seguridad.
+4. Instalar las dependencias definidas en Dependencies/dependencias.ts.
 
+***Uso***
 
-# API Agrostock Móvil
+La API expone múltiples endpoints para la gestión de datos agrícolas y logísticos. Entre las funcionalidades principales se incluyen:
 
-Este proyecto es una API desarrollada con Deno para la gestión de Agrostock, orientada a aplicaciones móviles. Permite administrar usuarios, productos, pedidos, reseñas, alertas de stock y más, facilitando la integración con sistemas móviles y web.
-
-
-## Instalación y ejecución
-
-1. Instala [Deno](https://deno.land/).
-2. Clona este repositorio.
-3. Configura las variables de entorno en el archivo `.env`.
-4. Instala las dependencias necesarias (ver `Dependencies/dependencias.ts`).
-5. Ejecuta la API:
-   ```powershell
-   deno run --allow-net --allow-read app.ts
-   ```
-
-## Uso
-
-La API permite gestionar usuarios, productos, pedidos, reseñas, alertas de stock, consejos y ubicaciones (regiones, ciudades, departamentos). Los endpoints principales incluyen:
-
-- Autenticación y registro de usuarios
-- Gestión de productos y stock
-- Creación y consulta de pedidos
-- Envío y consulta de reseñas
-- Alertas de stock
-- Consejos agrícolas
-- Gestión de ubicaciones
-
-Consulta el archivo `api.rest` para ejemplos de peticiones y pruebas.
+- Autenticación y registro de usuarios con control de roles.
+- Gestión de productos y stock con validación de cantidades mínimas.
+- Creación, modificación y consulta de pedidos.
+- Envío y recuperación de reseñas asociadas a productos.
+- Generación de alertas de stock en tiempo real.
+- Publicación y consulta de consejos agrícolas.
+- Gestión de ubicaciones (departamentos, ciudades y regiones) para trazabilidad de pedidos.
+- Para ejemplos de pruebas y consumo de endpoints, revisar el archivo api.rest.
 
 ## Seguridad
 
-El proyecto implementa autenticación mediante middleware (`Middlewares/AuthMiddleware.ts`). Se recomienda proteger las rutas sensibles y validar los datos recibidos.
+***El proyecto implementa un sistema de seguridad basado en:***
+
+1. Middleware d-e autenticación (Middlewares/AuthMiddleware.ts) para validación de tokens JWT.
+2.  Validación de datos entrantes para mitigar riesgos de inyección SQL o XSS.
+3. Gestión de permisos para proteger rutas sensibles según roles de usuario.
+
 
 ## Base de datos
 
-El archivo `agrostock.sql` contiene el esquema de la base de datos. Modifica la configuración de conexión en `Models/Conexion.ts` según tu entorno.
+El esquema relacional se encuentra en el archivo agrostock.sql.
+La conexión está configurada en Models/Conexion.ts, donde se deben ajustar parámetros como host, puerto, usuario, contraseña y base de datos según el entorno de despliegue.
 
-## Contribución
+***Contribución***
 
-Si deseas contribuir, por favor realiza un fork del repositorio y envía tus pull requests. Es importante seguir las buenas prácticas de desarrollo y documentar tus cambios.
+- Realizar un fork del repositorio.
+- Trabajar en una rama separada para los cambios.
+- Enviar pull requests documentados y con pruebas asociadas.
+- Contacto y soporte
+- Para incidencias, dudas técnicas o sugerencias:
+- Abrir un issue en el repositorio oficial.
+- Contactar directamente con el equipo de desarrollo de Agrostock.
 
-## Contacto y soporte
+***Autores***
 
-Para dudas, sugerencias o soporte, contacta al equipo de Agrostock o abre un issue en el repositorio.
+# Proyecto desarrollado por el equipo de Agrostock:
 
-
-## Autor
-
-Proyecto desarrollado por el equipo de Agrostock conformado por 
-Wilmer Andres Morales Peña
-Samuel Alejandro Gonzales Castillo
-Juan Pablo Barrera Caipa
-Lina Daniela Cepeda Alarcon 
-Andres Felipe Saavedra Castro
-
-
+1. Wilmer Andres Morales Peña
+2. Samuel Alejandro Gonzales Castillo
+3. Juan Pablo Barrera Caipa
+4. Lina Daniela Cepeda Alarcón
+5. Andres Felipe Saavedra Castro
