@@ -2,6 +2,7 @@ import { Context, RouterContext } from "../Dependencies/dependencias.ts";
 import { z } from "../Dependencies/dependencias.ts";
 import { Resena } from "../Models/ReseñasModel.ts";
 
+// 📌 Validaciones con Zod
 const resenaSchema = z.object({
   id_usuario: z.number().int().positive(),
   id_producto: z.number().int().positive(),
@@ -49,14 +50,14 @@ export const postResena = async (ctx: Context) => {
     const objResena = new Resena(resenaData);
     const result = await objResena.InsertarResena();
 
-    ctx.response.status = result.success ? 200 : 404;
+    ctx.response.status = result.success ? 200 : 400;
     ctx.response.body = {
       success: result.success,
       message: result.message,
       data: result.resena,
     };
   } catch (error) {
-    ctx.response.status = 404;
+    ctx.response.status = 400;
     ctx.response.body = {
       success: false,
       message: error instanceof z.ZodError ? "Datos inválidos." : "Error al insertar la reseña.",
@@ -73,13 +74,13 @@ export const putResena = async (ctx: Context) => {
     const objResena = new Resena(validated);
     const result = await objResena.EditarResena();
 
-    ctx.response.status = result.success ? 200 : 404;
+    ctx.response.status = result.success ? 200 : 400;
     ctx.response.body = {
       success: result.success,
       message: result.message,
     };
   } catch (error) {
-    ctx.response.status = 404;
+    ctx.response.status = 400;
     ctx.response.body = {
       success: false,
       message: error instanceof z.ZodError ? "Datos inválidos." : "Error al actualizar la reseña.",
@@ -92,7 +93,7 @@ export const deleteResena = async (ctx: RouterContext<"/Resena/:id">) => {
   try {
     const id_resena = Number(ctx.params.id);
     if (isNaN(id_resena) || id_resena <= 0) {
-      ctx.response.status = 404;
+      ctx.response.status = 400;
       ctx.response.body = {
         success: false,
         message: "ID de reseña inválido.",
@@ -122,7 +123,7 @@ export const getResenasByProducto = async (ctx: RouterContext<"/Resena/Producto/
   try {
     const id_producto = Number(ctx.params.id);
     if (isNaN(id_producto) || id_producto <= 0) {
-      ctx.response.status = 404;
+      ctx.response.status = 400;
       ctx.response.body = {
         success: false,
         message: "ID de producto inválido.",

@@ -1,5 +1,5 @@
 import { Router } from "../Dependencies/dependencias.ts";
-import {getDepartamentos} from "../Controller/DepartamentosController.ts";
+import { getDepartamentos } from "../Controller/DepartamentosController.ts";
 
 const DepartamentosRouter = new Router();
 

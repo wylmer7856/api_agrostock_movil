@@ -1,8 +1,9 @@
+### Usuarios
+
 ### Obtener todos los usuarios
 GET http://localhost:8000/Usuario
 
 ###
-
 ### Crear nuevo usuario
 POST http://localhost:8000/Usuario
 Content-Type: application/json
@@ -18,7 +19,6 @@ Content-Type: application/json
 }
 
 ###
-
 ### Editar un usuario existente
 PUT http://localhost:8000/Usuario
 Content-Type: application/json
@@ -35,13 +35,13 @@ Content-Type: application/json
 }
 
 ###
-
 ### Eliminar un usuario por ID
 DELETE http://localhost:8000/Usuario/2
 
 
-//___________//_____________//________________//____________________//____________________
-###login
+### Autenticación
+
+### Login
 POST http://localhost:8000/auth/login
 Content-Type: application/json
 
@@ -51,60 +51,60 @@ Content-Type: application/json
 }
 
 
-### Ejemplos adicionales de filtrado
-
-### Productos por rango de precios
-GET http://localhost:8000/productos?precio_min=3000&precio_max=8000&orden=precio_asc
-###
-
-### Productos por unidad de medida
-GET http://localhost:8000/productos?unidadMedida=kg&disponible=true
-###
-
-### Productos ordenados por stock
-GET http://localhost:8000/productos?orden=stock_desc&limite=15
-###
-
-### Búsqueda combinada
-GET http://localhost:8000/productos?nombre=cherry&id_ciudad_origen=1&stock_min=20&orden=nombre_asc
-###
+### Productos
 
 ### Obtener todos los productos
 GET http://localhost:8000/productos
-###
 
+###
 ### Obtener productos con filtros y paginación
 GET http://localhost:8000/productos?nombre=tomate&precio_min=2000&precio_max=10000&orden=precio_asc&limite=10&pagina=1
-###
 
-### Obtener productos disponibles (en stock)
+###
+### Productos por rango de precios
+GET http://localhost:8000/productos?precio_min=3000&precio_max=8000&orden=precio_asc
+
+###
+### Productos por unidad de medida
+GET http://localhost:8000/productos?unidadMedida=kg&disponible=true
+
+###
+### Productos ordenados por stock
+GET http://localhost:8000/productos?orden=stock_desc&limite=15
+
+###
+### Búsqueda combinada
+GET http://localhost:8000/productos?nombre=cherry&id_ciudad_origen=1&stock_min=20&orden=nombre_asc
+
+###
+### Obtener productos disponibles
 GET http://localhost:8000/productos/disponibles
-###
 
+###
 ### Obtener productos disponibles con filtros
 GET http://localhost:8000/productos/disponibles?orden=nombre_asc&limite=20&id_ciudad_origen=1
-###
 
+###
 ### Buscar productos por nombre
 GET http://localhost:8000/productos/buscar?nombre=manzana
-###
 
+###
 ### Buscar productos con múltiples filtros
 GET http://localhost:8000/productos/buscar?nombre=papa&precio_max=5000&stock_min=10&orden=precio_desc
-###
 
+###
 ### Obtener productos de un usuario específico
 GET http://localhost:8000/productos/usuario/1
-###
 
+###
 ### Obtener productos de un usuario con filtros
 GET http://localhost:8000/productos/usuario/1?disponible=true&orden=precio_asc&limite=5
-###
 
+###
 ### Obtener un producto por ID
 GET http://localhost:8000/productos/8
-###
 
+###
 ### Agregar un nuevo producto
 POST http://localhost:8000/productos
 Content-Type: application/json
@@ -119,11 +119,10 @@ Content-Type: application/json
   "id_ciudad_origen": 1,
   "unidadMedida": "kg",
   "pesoAprox": 0.02,
-  "imagenData": "file:///C:/Users/jbarr/Pictures/nirvana.png"
+  "imagenData": "file:///C:/Users/jbarr/Pictures/"
 }
 
 ###
-
 ### Editar un producto existente
 PUT http://localhost:8000/productos/8
 Content-Type: application/json
@@ -138,58 +137,58 @@ Content-Type: application/json
   "id_ciudad_origen": 1,
   "unidadMedida": "kg",
   "pesoAprox": 0.18,
-  "imagenData": "file:///C:/Users/jbarr/Pictures/Banda.png"
+  "imagenData": "file:///C:/Users/jbarr/Pictures/"
 }
 
 ###
-
 ### Eliminar un producto
 DELETE http://localhost:8000/productos/8
-###
 
 
-//___________//_____________//________________//____________________//____________________
+### Regiones / Departamentos / Ciudades
 
 ### Obtener todas las regiones
 GET http://localhost:8000/regiones
 
-//___________//_____________//________________//____________________//____________________
+###
 ### Obtener todos los departamentos
 GET http://localhost:8000/departamentos
 
-//___________//_____________//________________//____________________//____________________
-
+###
 ### Obtener todas las ciudades
 GET http://localhost:8000/ciudades
 
 
-//___________//_____________//________________//____________________//____________________
+### Alertas
 
-###obtener todas las alertas
+### Obtener todas las alertas
 GET http://localhost:8000/alertas
 
-### Obtener alertas activas (ultimos 7 dias)
+###
+### Obtener alertas activas (últimos 7 días)
 GET http://localhost:8000/alertas/activas
 
-### Generar alertas automaticas
+###
+### Generar alertas automáticas
 POST http://localhost:8000/alertas/generar
 Content-Type: application/json
 
 ###
-
-### Marcar alerta como resuelta (cambiar el ID por uno existente)
+### Marcar alerta como resuelta
 PUT http://localhost:8000/alertas/1/resolver
 Content-Type: application/json
-###
 
-### Eliminar una alerta por ID (cambiar el ID por uno existente)
+###
+### Eliminar una alerta por ID
 DELETE http://localhost:8000/alertas/2
 
-//___________//_____________//________________//____________________//____________________
+
+### Detalles de Pedidos
 
 ### Obtener todos los detalles de pedidos
 GET http://localhost:8000/detalle_pedidos
 
+###
 ### Agregar un nuevo detalle de pedido
 POST http://localhost:8000/detalle_pedidos
 Content-Type: application/json
@@ -202,16 +201,17 @@ Content-Type: application/json
   "precio_total": 297500
 }
 
-### Eliminar un detalle de pedido por ID
+###
+### Eliminar un detalle de pedido
 DELETE http://localhost:8000/detalle_pedidos/1
 
-//_________//_________//____________//____________//_____________//________________
+
+### Pedidos
 
 ### Obtener todos los pedidos
 GET http://localhost:8000/Pedidos
 
 ###
-
 ### Crear nuevo pedido
 POST http://localhost:8000/Pedidos
 Content-Type: application/json
@@ -229,7 +229,6 @@ Content-Type: application/json
 }
 
 ###
-
 ### Editar un pedido existente
 PUT http://localhost:8000/Pedido/2
 Content-Type: application/json
@@ -248,7 +247,77 @@ Content-Type: application/json
 }
 
 ###
-
 ### Eliminar un pedido por ID
 DELETE http://localhost:8000/Pedido/2
+
+
+### Reseñas
+
+### Obtener todas las reseñas
+GET http://localhost:8000/resenas
+
 ###
+### Agregar una nueva reseña
+POST http://localhost:8000/resenas
+Content-Type: application/json
+
+{
+  "id_producto": 10,
+  "id_pedido": 5,
+  "comentario": "Excelente producto, está en perfecto estado",
+  "calificacion": 5,
+  "fecha": "2025-09-18"
+}
+
+###
+### Editar una reseña existente
+PUT http://localhost:8000/resenas
+Content-Type: application/json
+
+{
+  "id_resena": 7,
+  "id_producto": 10,
+  "id_pedido": 5,
+  "comentario": "El producto es bueno pero tardó en llegar",
+  "calificacion": 4,
+  "fecha": "2025-09-18"
+}
+
+###
+### Eliminar una reseña por ID
+DELETE http://localhost:8000/resenas/7
+
+
+### Consejos
+
+### Obtener todos los consejos
+GET http://localhost:8000/Consejo
+
+###
+### Crear nuevo consejo
+POST http://localhost:8000/Consejo
+Content-Type: application/json
+
+{
+  "id_usuario": 2,
+  "titulo": "Consejo para sembrar tomates",
+  "contenido": "Usa abono orgánico y riega temprano en la mañana para mejores resultados.",
+  "fecha": "2025-09-18"
+}
+
+###
+### Editar un consejo existente
+PUT http://localhost:8000/Consejo
+Content-Type: application/json
+
+{
+  "id_consejo": 3,
+  "id_usuario": 1,
+  "titulo": "Consejo actualizado para sembrar tomates",
+  "contenido": "Mantén el suelo húmedo pero evita el exceso de agua.",
+  "fecha": "2025-09-18"
+}
+
+###
+### Eliminar un consejo por ID
+DELETE http://localhost:8000/Consejo/2
