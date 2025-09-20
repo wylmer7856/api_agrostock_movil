@@ -50,9 +50,60 @@ Content-Type: application/json
   "password": "123456789"
 }
 
-//___________//_____________//________________//____________________//____________________
-### Obtener un producto por ID
+
+### Ejemplos adicionales de filtrado
+
+### Productos por rango de precios
+GET http://localhost:8000/productos?precio_min=3000&precio_max=8000&orden=precio_asc
+###
+
+### Productos por unidad de medida
+GET http://localhost:8000/productos?unidadMedida=kg&disponible=true
+###
+
+### Productos ordenados por stock
+GET http://localhost:8000/productos?orden=stock_desc&limite=15
+###
+
+### Búsqueda combinada
+GET http://localhost:8000/productos?nombre=cherry&id_ciudad_origen=1&stock_min=20&orden=nombre_asc
+###
+
+### Obtener todos los productos
 GET http://localhost:8000/productos
+###
+
+### Obtener productos con filtros y paginación
+GET http://localhost:8000/productos?nombre=tomate&precio_min=2000&precio_max=10000&orden=precio_asc&limite=10&pagina=1
+###
+
+### Obtener productos disponibles (en stock)
+GET http://localhost:8000/productos/disponibles
+###
+
+### Obtener productos disponibles con filtros
+GET http://localhost:8000/productos/disponibles?orden=nombre_asc&limite=20&id_ciudad_origen=1
+###
+
+### Buscar productos por nombre
+GET http://localhost:8000/productos/buscar?nombre=manzana
+###
+
+### Buscar productos con múltiples filtros
+GET http://localhost:8000/productos/buscar?nombre=papa&precio_max=5000&stock_min=10&orden=precio_desc
+###
+
+### Obtener productos de un usuario específico
+GET http://localhost:8000/productos/usuario/1
+###
+
+### Obtener productos de un usuario con filtros
+GET http://localhost:8000/productos/usuario/1?disponible=true&orden=precio_asc&limite=5
+###
+
+### Obtener un producto por ID
+GET http://localhost:8000/productos/8
+###
 
 ### Agregar un nuevo producto
 POST http://localhost:8000/productos
@@ -60,37 +111,41 @@ Content-Type: application/json
 
 {
   "nombre": "Tomates Cherry",
-  "descripcion": "Tomates cherry frescos y organicos",
-  "precio": 4.2,
+  "descripcion": "Tomates cherry frescos y orgánicos",
+  "precio": 4200,
   "stock": 50,
   "stockMinimo": 10,
   "id_usuario": 1,
   "id_ciudad_origen": 1,
   "unidadMedida": "kg",
   "pesoAprox": 0.02,
-  "imagenData": "file:///C:/Users/jbarr/Pictures/"
+  "imagenData": "file:///C:/Users/jbarr/Pictures/nirvana.png"
 }
 
-### Editar un producto existente
+###
 
-PUT http://localhost:8000/productos/7
+### Editar un producto existente
+PUT http://localhost:8000/productos/8
 Content-Type: application/json
 
 {
   "nombre": "Manzanas Verdes Premium",
   "descripcion": "Manzanas verdes premium de alta calidad",
-  "precio": 4.5,
+  "precio": 4500,
   "stock": 80,
   "stockMinimo": 20,
   "id_usuario": 1,
   "id_ciudad_origen": 1,
   "unidadMedida": "kg",
   "pesoAprox": 0.18,
-  "imagenData": "file:///C:/Users/jbarr/Pictures/"
+  "imagenData": "file:///C:/Users/jbarr/Pictures/Banda.png"
 }
 
-### Eliminar un producto por ID
-DELETE http://localhost:8000/productos/7
+###
+
+### Eliminar un producto
+DELETE http://localhost:8000/productos/8
+###
 
 
 //___________//_____________//________________//____________________//____________________
@@ -98,80 +153,15 @@ DELETE http://localhost:8000/productos/7
 ### Obtener todas las regiones
 GET http://localhost:8000/regiones
 
-### Agregar una nueva region
-POST http://localhost:8000/regiones
-Content-Type: application/json
-
-{
-  "nombre": "Region Andina"
-}
-
-### Editar una region existente
-PUT http://localhost:8000/regiones
-Content-Type: application/json
-
-{
-  "id_region": 7,
-  "nombre": "Region Editada"
-}
-
-
-
-### Eliminar una region por ID
-DELETE http://localhost:8000/regiones/7
-
 //___________//_____________//________________//____________________//____________________
 ### Obtener todos los departamentos
 GET http://localhost:8000/departamentos
-
-### Agregar un nuevo departamento
-POST http://localhost:8000/departamentos
-Content-Type: application/json
-
-{
-  "nombre": "Departamento de Prueba",
-  "id_region": 1
-}
-
-### Editar un departamento existente
-PUT http://localhost:8000/departamentos
-Content-Type: application/json
-
-{
-  "id_departamento": 34,
-  "nombre": "Departamento Editado",
-  "id_region": 2
-}
-
-### Eliminar un departamento por ID
-DELETE http://localhost:8000/departamentos/34
 
 //___________//_____________//________________//____________________//____________________
 
 ### Obtener todas las ciudades
 GET http://localhost:8000/ciudades
 
-### Agregar una nueva ciudad
-POST http://localhost:8000/ciudades
-Content-Type: application/json
-
-{
-  "nombre": "Ciudad de Prueba",
-  "id_departamento": 1
-}
-
-### Editar una ciudad existente
-PUT http://localhost:8000/ciudades
-Content-Type: application/json
-
-{
-  "id_ciudad": 33,
-  "nombre": "Ciudad Editada",
-  "id_departamento": 2
-}
-
-### Eliminar una ciudad por ID
-DELETE http://localhost:8000/ciudades/33
 
 //___________//_____________//________________//____________________//____________________
 
@@ -214,3 +204,51 @@ Content-Type: application/json
 
 ### Eliminar un detalle de pedido por ID
 DELETE http://localhost:8000/detalle_pedidos/1
+
+//_________//_________//____________//____________//_____________//________________
+
+### Obtener todos los pedidos
+GET http://localhost:8000/Pedidos
+
+###
+
+### Crear nuevo pedido
+POST http://localhost:8000/Pedidos
+Content-Type: application/json
+
+{
+  "id_consumidor": 1,
+  "id_productor": 2,
+  "fecha": "2025-09-19T10:00:00.000Z",
+  "estado": "pendiente",
+  "total": 25000,
+  "direccionEntrega": "Calle 45 #12-34, Bogotá",
+  "notas": "Entregar en horario de oficina",
+  "fecha_entrega_estimada": "2025-09-22T14:00:00.000Z",
+  "metodo_pago": "tarjeta_credito"
+}
+
+###
+
+### Editar un pedido existente
+PUT http://localhost:8000/Pedido/2
+Content-Type: application/json
+
+{
+  "id_pedido": 2,
+  "id_consumidor": 1,
+  "id_productor": 2,
+  "fecha": "2025-09-19T10:00:00.000Z",
+  "estado": "confirmado",
+  "total": 28000,
+  "direccionEntrega": "Carrera 15 #20-10, Fusagasugá",
+  "notas": "Cambio de dirección de entrega",
+  "fecha_entrega_estimada": "2025-09-21T16:00:00.000Z",
+  "metodo_pago": "efectivo"
+}
+
+###
+
+### Eliminar un pedido por ID
+DELETE http://localhost:8000/Pedido/2
+###

@@ -22,7 +22,7 @@ export class AuthController {
       const { email, password } = body;
 
       if (!email || !password) {
-        ctx.response.status = 400;
+        ctx.response.status = 404;
         ctx.response.body = { error: "Email y contraseña son requeridos" };
         return;
       }
