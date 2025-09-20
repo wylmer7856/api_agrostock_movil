@@ -1,12 +1,20 @@
 import { Router } from "../Dependencies/dependencias.ts";
-import { getUsuarios, postUsuario, putUsuario, deleteUsuario } from "../Controller/UsuariosController.ts";
+import {
+  getUsuarios,
+  postUsuario,
+  putUsuario,
+  deleteUsuario,
+} from "../Controller/UsuariosController.ts";
+import { AuthMiddleware } from "../Middlewares/AuthMiddleware.ts";
 
 const UsuariosRouter = new Router();
 
-UsuariosRouter.get("/Usuario", getUsuarios);          // Listar usuarios
-UsuariosRouter.post("/Usuario", postUsuario);         // Crear usuario
-UsuariosRouter.put("/Usuario", putUsuario);           // Editar usuario
-UsuariosRouter.delete("/Usuario/:id", deleteUsuario); // Eliminar usuario por ID
+// Solo el rol 'admin' puede acceder a estas rutas
+UsuariosRouter
+  .get("/Usuario", AuthMiddleware(["admin"]), getUsuarios)          // Listar usuarios
+  .post("/Usuario", AuthMiddleware(["admin"]), postUsuario)         // Crear usuario
+  .put("/Usuario", AuthMiddleware(["admin"]), putUsuario)           // Editar usuario
+  .delete("/Usuario/:id", AuthMiddleware(["admin"]), deleteUsuario) // Eliminar usuario por ID
 
 UsuariosRouter.get("/Usuario/Ciudad/:id_ciudad", getUsuariosPorCiudad);
 UsuariosRouter.get("/Usuario/Departamento/:id_departamento", getUsuariosPorDepartamento);

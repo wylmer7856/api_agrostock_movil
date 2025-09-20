@@ -1,11 +1,9 @@
 import { Router } from "../Dependencies/dependencias.ts";
-import {getRegiones, postRegiones, putRegiones, deleteRegiones} from "../Controller/RegionesController.ts";
+import { getRegiones } from "../Controller/RegionesController.ts";
+import { AuthMiddleware } from "../Middlewares/AuthMiddleware.ts";
 
-const Regionesrouter = new Router();
+const RegionesRouter = new Router();
 
-Regionesrouter.get("/regiones", getRegiones)
-Regionesrouter.post("/regiones", postRegiones)
-Regionesrouter.put("/regiones", putRegiones)
-Regionesrouter.delete("/regiones/:id", deleteRegiones);
+RegionesRouter.get("/regiones", AuthMiddleware(["admin", "productor"]), getRegiones);
 
-export {Regionesrouter};
+export { RegionesRouter };

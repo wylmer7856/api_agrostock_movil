@@ -7,14 +7,14 @@ import { DepartamentosRouter } from "./Routers/DepartamentosRouter.ts";
 import { CiudadesRouter } from "./Routers/CiudadesRouter.ts";
 import { AlertasRouter } from "./Routers/Alertas_StockRouter.ts";
 import { DetallePedidosRouter } from "./Routers/Detalle_PedidosRouter.ts";
-import { ResenasRouter } from "./Routers/ReseñasRouter.ts";
+import { pedidosRouter } from "./Routers/PedidosRouter.ts";
 
 const app = new Application();
 
 
 app.use(oakCors());
 
-const routers = [UsuariosRouter,AuthRouter, ProductosRouter, Regionesrouter, DepartamentosRouter, CiudadesRouter, AlertasRouter, DetallePedidosRouter,ReseñasRouter];
+const routers = [UsuariosRouter,AuthRouter, ProductosRouter, Regionesrouter, DepartamentosRouter, CiudadesRouter, AlertasRouter, DetallePedidosRouter, pedidosRouter];
 
 routers.forEach((router) => {
   app.use(router.routes());

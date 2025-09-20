@@ -51,14 +51,14 @@ export const postUsuario = async (ctx: Context) => {
     const objUsuario = new Usuario(usuarioData);
     const result = await objUsuario.InsertarUsuario();
 
-    ctx.response.status = result.success ? 200 : 400;
+    ctx.response.status = result.success ? 200 : 404;
     ctx.response.body = {
       success: result.success,
       message: result.message,
       data: result.usuario,
     };
   } catch (error) {
-    ctx.response.status = 400;
+    ctx.response.status = 404;
     ctx.response.body = {
       success: false,
       message: error instanceof z.ZodError ? "Datos invalidos." : "Error al insertar el usuario.",
@@ -74,13 +74,13 @@ export const putUsuario = async (ctx: Context) => {
     const objUsuario = new Usuario(validated);
     const result = await objUsuario.EditarUsuario();
 
-    ctx.response.status = result.success ? 200 : 400;
+    ctx.response.status = result.success ? 200 : 404;
     ctx.response.body = {
       success: result.success,
       message: result.message,
     };
   } catch (error) {
-    ctx.response.status = 400;
+    ctx.response.status = 404;
     ctx.response.body = {
       success: false,
       message: error instanceof z.ZodError ? "Datos invalidos." : "Error al actualizar el usuario.",
@@ -92,7 +92,7 @@ export const deleteUsuario = async (ctx: RouterContext<"/Usuario/:id">) => {
   try {
     const id_usuario = Number(ctx.params.id);
     if (isNaN(id_usuario) || id_usuario <= 0) {
-      ctx.response.status = 400;
+      ctx.response.status = 404;
       ctx.response.body = {
         success: false,
         message: "ID de usuario invalido.",

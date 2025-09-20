@@ -8,7 +8,7 @@ const resenaSchema = z.object({
   id_producto: z.number().int().positive(),
   calificacion: z.number().min(1).max(5),
   comentario: z.string().min(3),
-  fecha: z.string().transform((val) => new Date(val)), // se convierte a Date
+  fecha: z.string().transform((val) => new Date(val)),
 });
 
 const resenaSchemaUpdate = resenaSchema.extend({

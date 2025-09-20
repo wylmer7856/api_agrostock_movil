@@ -46,7 +46,7 @@ export const postDetalle = async (ctx: Context) => {
     const model = new DetallePedidosModel(data);
     const result = await model.AgregarDetalle();
 
-    ctx.response.status = result.success ? 200 : 400;
+    ctx.response.status = result.success ? 200 : 404;
     ctx.response.body = {
       success: result.success,
       message: result.message,
@@ -54,7 +54,7 @@ export const postDetalle = async (ctx: Context) => {
     };
   } catch (error) {
     console.error("Error en postDetalle:", error);
-    ctx.response.status = 400;
+    ctx.response.status = 404;
     ctx.response.body = {
       success: false,
       message: error instanceof z.ZodError ? "Datos invalidos" : "Error al agregar el detalle"
@@ -66,7 +66,7 @@ export const deleteDetalle = async (ctx: RouterContext<"/detalle_pedidos/:id">) 
   try {
     const id_detalle = Number(ctx.params.id);
     if (isNaN(id_detalle) || id_detalle <= 0) {
-      ctx.response.status = 400;
+      ctx.response.status = 404;
       ctx.response.body = {
         success: false,
         message: "ID invalido.",

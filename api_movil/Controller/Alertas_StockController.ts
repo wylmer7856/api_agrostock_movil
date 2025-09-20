@@ -68,7 +68,7 @@ export const marcarAlertaResuelta = async (ctx: RouterContext<"/alertas/:id/reso
   try {
     const id_alerta = Number(ctx.params.id);
     if (isNaN(id_alerta) || id_alerta <= 0) {
-      ctx.response.status = 400;
+      ctx.response.status = 404;
       ctx.response.body = {
         success: false,
         message: "ID de alerta invalido.",
@@ -98,7 +98,7 @@ export const deleteAlerta = async (ctx: RouterContext<"/alertas/:id">) => {
   try {
     const id_alerta = Number(ctx.params.id);
     if (isNaN(id_alerta) || id_alerta <= 0) {
-      ctx.response.status = 400;
+      ctx.response.status = 404;
       ctx.response.body = {
         success: false,
         message: "ID de alerta invalido.",

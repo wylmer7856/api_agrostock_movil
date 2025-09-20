@@ -1,18 +1,21 @@
 import { Router } from "../Dependencies/dependencias.ts";
-import { 
-  getResenas, 
-  postResena, 
-  putResena, 
-  deleteResena, 
-  getResenasByProducto 
+import {
+  getResenas,
+  postResena,
+  putResena,
+  deleteResena,
+  getResenasByProducto,
 } from "../Controller/ReseñasController.ts";
+import { AuthMiddleware } from "../Middlewares/AuthMiddleware.ts";
 
 const ResenasRouter = new Router();
 
-ResenasRouter.get("/Resena", getResenas);                 // Listar reseñas
-ResenasRouter.post("/Resena", postResena);                // Crear reseña
-ResenasRouter.put("/Resena", putResena);                  // Editar reseña
-ResenasRouter.delete("/Resena/:id", deleteResena);        // Eliminar reseña por ID
-ResenasRouter.get("/Resena/Producto/:id", getResenasByProducto); // Reseñas de un producto
+// Rutas protegidas por rol
+ResenasRouter
+  .get("/Resena", AuthMiddleware(["admin"]), getResenas) // Listar todas las reseñas
+  .post("/Resena", AuthMiddleware(["consumidor"]), postResena) // Crear reseña
+  .put("/Resena", AuthMiddleware(["consumidor"]), putResena) // Editar reseña
+  .delete("/Resena/:id", AuthMiddleware(["admin"]), deleteResena) // Eliminar reseña
+  .get("/Resena/Producto/:id", AuthMiddleware(["admin", "consumidor"]), getResenasByProducto); // Ver reseñas por producto
 
 export { ResenasRouter };
