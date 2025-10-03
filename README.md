@@ -1,58 +1,248 @@
-## API Agrostock Móvil
+# 🌾 AgroStock API - Documentación
 
-Este proyecto consiste en una API desarrollada con Deno para la gestión integral de Agrostock, orientada a aplicaciones móviles y web. El sistema permite la administración de usuarios, productos, pedidos, reseñas, alertas de stock y localizaciones geográficas, facilitando la interoperabilidad entre plataformas y brindando un entorno escalable y seguro para la gestión agrícola digital.
+## 📋 Descripción
+API REST para la plataforma AgroStock, un sistema de comercio electrónico que conecta productores agrícolas y artesanales con consumidores. La plataforma permite la gestión de productos, pedidos, mensajes y reportes con un sistema de roles robusto.
 
-# Instalación y ejecución
+## 🚀 Características Principales
 
-***Instalar Deno***
-1. en su entorno de desarrollo.
-2.  Clonar este repositorio mediante git clone.
-3. Configurar las variables de entorno en el archivo .env para la conexión con la base de datos y parámetros de seguridad.
-4. Instalar las dependencias definidas en Dependencies/dependencias.ts.
+### 🔐 Sistema de Autenticación
+- Autenticación JWT con roles (admin, productor, consumidor)
+- Middleware de autorización por roles
+- Sesiones seguras con expiración configurable
 
-***Uso***
+### 👥 Gestión de Usuarios
+- **Administradores**: Control total del sistema
+- **Productores**: Gestión de productos y comunicación con consumidores
+- **Consumidores**: Navegación, búsqueda y contacto con productores
 
-La API expone múltiples endpoints para la gestión de datos agrícolas y logísticos. Entre las funcionalidades principales se incluyen:
+### 🛍️ Gestión de Productos
+- CRUD completo de productos
+- Sistema de categorías
+- Subida de imágenes
+- Búsqueda avanzada por múltiples criterios
+- Gestión de stock y alertas
 
-- Autenticación y registro de usuarios con control de roles.
-- Gestión de productos y stock con validación de cantidades mínimas.
-- Creación, modificación y consulta de pedidos.
-- Envío y recuperación de reseñas asociadas a productos.
-- Generación de alertas de stock en tiempo real.
-- Publicación y consulta de consejos agrícolas.
-- Gestión de ubicaciones (departamentos, ciudades y regiones) para trazabilidad de pedidos.
-- Para ejemplos de pruebas y consumo de endpoints, revisar el archivo api.rest.
+### 💬 Sistema de Comunicación
+- Mensajes internos entre usuarios
+- Contacto directo con productores (sin login)
+- Notificaciones de mensajes no leídos
+- Historial de conversaciones
 
-## Seguridad
+### 📊 Sistema de Reportes
+- Reportes de usuarios y productos
+- Gestión de reportes por administradores
+- Estados de reportes (pendiente, en revisión, resuelto, rechazado)
 
-***El proyecto implementa un sistema de seguridad basado en:***
+### 📈 Estadísticas y Analytics
+- Estadísticas generales del sistema
+- Estadísticas por usuario
+- Actividad reciente
+- Métricas de productos y usuarios
 
-1. Middleware d-e autenticación (Middlewares/AuthMiddleware.ts) para validación de tokens JWT.
-2.  Validación de datos entrantes para mitigar riesgos de inyección SQL o XSS.
-3. Gestión de permisos para proteger rutas sensibles según roles de usuario.
+## 🌐 Endpoints Principales
 
+### 🔐 Autenticación
+```
+POST /auth/login
+```
 
-## Base de datos
+### 🛍️ Productos
+```
+GET    /productos                    # Lista pública de productos
+GET    /productos/buscar             # Búsqueda avanzada
+GET    /productos/:id                # Ver producto individual
+GET    /productos/:id/detalle        # Ver producto detallado
+GET    /productos/productor/:id      # Productos de un productor
+POST   /productos                    # Crear producto (auth)
+PUT    /productos/:id                # Actualizar producto (auth)
+DELETE /productos/:id                # Eliminar producto (auth)
+```
 
-El esquema relacional se encuentra en el archivo agrostock.sql.
-La conexión está configurada en Models/Conexion.ts, donde se deben ajustar parámetros como host, puerto, usuario, contraseña y base de datos según el entorno de despliegue.
+### 📂 Categorías
+```
+GET    /categorias                   # Lista de categorías activas
+GET    /categorias/:id               # Obtener categoría por ID
+GET    /categorias/:id/productos     # Productos por categoría
+```
 
-***Contribución***
+### 💬 Mensajes
+```
+POST   /mensajes/enviar              # Enviar mensaje (auth)
+GET    /mensajes/recibidos           # Mensajes recibidos (auth)
+GET    /mensajes/enviados            # Mensajes enviados (auth)
+PUT    /mensajes/:id/leer            # Marcar como leído (auth)
+DELETE /mensajes/:id                 # Eliminar mensaje (auth)
+POST   /mensajes/contactar-productor # Contactar productor (público)
+```
 
-- Realizar un fork del repositorio.
-- Trabajar en una rama separada para los cambios.
-- Enviar pull requests documentados y con pruebas asociadas.
-- Contacto y soporte
-- Para incidencias, dudas técnicas o sugerencias:
-- Abrir un issue en el repositorio oficial.
-- Contactar directamente con el equipo de desarrollo de Agrostock.
+### 📊 Reportes
+```
+POST   /reportes/crear               # Crear reporte (auth)
+POST   /reportes/reportar-usuario    # Reportar usuario (auth)
+POST   /reportes/reportar-producto   # Reportar producto (auth)
+```
 
-***Autores***
+### 👨‍💼 Administración
+```
+GET    /admin/usuarios               # Todos los usuarios (admin)
+POST   /admin/usuarios/crear         # Crear usuario (admin)
+PUT    /admin/usuarios/:id           # Editar usuario (admin)
+DELETE /admin/usuarios/:id           # Eliminar usuario (admin)
+GET    /admin/productos              # Todos los productos (admin)
+DELETE /admin/productos/:id/inapropiado # Eliminar producto inapropiado (admin)
+GET    /admin/reportes               # Todos los reportes (admin)
+PUT    /admin/reportes/:id/resolver  # Resolver reporte (admin)
+GET    /admin/estadisticas           # Estadísticas generales (admin)
+```
 
-# Proyecto desarrollado por el equipo de Agrostock:
+### 📈 Estadísticas
+```
+GET    /estadisticas/generales       # Estadísticas generales (admin)
+GET    /estadisticas/usuario/:id     # Estadísticas de usuario (auth)
+GET    /estadisticas/actividad-reciente # Actividad reciente (admin)
+```
 
-1. Wilmer Andres Morales Peña
-2. Samuel Alejandro Gonzales Castillo
-3. Juan Pablo Barrera Caipa
-4. Lina Daniela Cepeda Alarcón
-5. Andres Felipe Saavedra Castro
+### 🌍 Ubicaciones
+```
+GET    /regiones                     # Lista de regiones
+GET    /departamentos                # Lista de departamentos
+GET    /ciudades                     # Lista de ciudades
+```
+
+## 🔧 Configuración
+
+### Variables de Entorno
+```env
+JWT_SECRET=tu_clave_secreta_aqui
+DB_HOST=localhost
+DB_USER=usuario_db
+DB_PASSWORD=password_db
+DB_NAME=agrostock
+```
+
+### Instalación
+```bash
+# Instalar dependencias
+deno install
+
+# Ejecutar en modo desarrollo
+deno task dev
+
+# Ejecutar en producción
+deno run --allow-net app.ts
+```
+
+## 📊 Base de Datos
+
+### Tablas Principales
+- `usuarios` - Información de usuarios
+- `productos` - Catálogo de productos
+- `categorias` - Categorías de productos
+- `mensajes` - Sistema de mensajería
+- `reportes` - Sistema de reportes
+- `pedidos` - Gestión de pedidos
+- `resenas` - Reseñas de productos
+- `estadisticas_usuarios` - Estadísticas por usuario
+
+## 🛡️ Seguridad
+
+### Autenticación
+- Tokens JWT con expiración
+- Validación de roles en cada endpoint
+- Middleware de autenticación centralizado
+
+### Validación
+- Validación de datos con Zod
+- Sanitización de entradas
+- Validación de tipos de archivo para imágenes
+
+### CORS
+- Configuración CORS para desarrollo y producción
+- Headers de seguridad apropiados
+
+## 📱 Funcionalidades por Rol
+
+### 👨‍💼 Administrador
+- Ver todos los usuarios y productos
+- Crear, editar y eliminar usuarios
+- Eliminar productos inapropiados
+- Gestionar reportes
+- Ver estadísticas generales
+- Acceder a todos los paneles
+
+### 🌾 Productor
+- Crear, editar y eliminar productos
+- Subir imágenes de productos
+- Ver lista de productos publicados
+- Recibir mensajes de consumidores
+- Editar perfil personal
+- Ver estadísticas personales
+
+### 🛒 Consumidor
+- Navegar productos sin login
+- Buscar productos por múltiples criterios
+- Ver detalle de productos
+- Ver perfil público del productor
+- Contactar productores
+- Editar perfil personal
+
+## 🔄 Flujo de Trabajo
+
+### Para Consumidores
+1. Navegar productos públicamente
+2. Buscar productos por criterios
+3. Ver detalles del producto y productor
+4. Contactar al productor (con o sin login)
+5. Registrarse para funcionalidades avanzadas
+
+### Para Productores
+1. Registrarse como productor
+2. Crear productos con imágenes
+3. Asociar productos con categorías
+4. Recibir y responder mensajes
+5. Gestionar stock y alertas
+
+### Para Administradores
+1. Supervisar toda la plataforma
+2. Gestionar usuarios y productos
+3. Resolver reportes
+4. Analizar estadísticas
+5. Mantener la integridad del sistema
+
+## 📈 Métricas y Analytics
+
+### Estadísticas Generales
+- Total de usuarios por rol
+- Total de productos por categoría
+- Distribución de usuarios por región
+- Actividad reciente del sistema
+
+### Estadísticas por Usuario
+- Productos publicados (productores)
+- Mensajes recibidos
+- Pedidos gestionados
+- Actividad mensual
+
+## 🚀 Despliegue
+
+### Requisitos
+- Deno 1.40+
+- MySQL/MariaDB 10.4+
+- Node.js (opcional para herramientas)
+
+### Pasos
+1. Clonar el repositorio
+2. Configurar variables de entorno
+3. Ejecutar script SQL de base de datos
+4. Instalar dependencias con Deno
+5. Ejecutar la aplicación
+
+## 📞 Soporte
+
+Para soporte técnico o consultas sobre la API, contactar al equipo de desarrollo.
+
+---
+
+**Versión**: 1.0.0  
+**Última actualización**: Diciembre 2024  
+**Licencia**: Propietaria

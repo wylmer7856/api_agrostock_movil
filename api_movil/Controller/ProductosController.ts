@@ -574,3 +574,230 @@ export const deleteProducto = async (ctx: RouterContext<"/productos/:id">) => {
     };
   }
 };
+
+// 📌 Nuevas funciones para funcionalidades mejoradas
+
+export const getProductosConInfo = async (ctx: Context) => {
+  try {
+    const queryParams = Object.fromEntries(ctx.request.url.searchParams.entries());
+    const filtros = filtrosSchema.parse(queryParams);
+
+    const objProductos = new ProductosModel();
+    const lista = await objProductos.ListarProductosConInfo();
+
+    // Aplicar filtros básicos
+    let productosFiltrados = [...lista];
+
+    if (filtros.nombre) {
+      productosFiltrados = productosFiltrados.filter(producto => 
+        producto.nombre.toLowerCase().includes(filtros.nombre.toLowerCase())
+      );
+    }
+
+    if (filtros.precio_min !== undefined) {
+      productosFiltrados = productosFiltrados.filter(producto => 
+        producto.precio >= filtros.precio_min
+      );
+    }
+
+    if (filtros.precio_max !== undefined) {
+      productosFiltrados = productosFiltrados.filter(producto => 
+        producto.precio <= filtros.precio_max
+      );
+    }
+
+    if (filtros.stock_min !== undefined) {
+      productosFiltrados = productosFiltrados.filter(producto => 
+        producto.stock >= filtros.stock_min
+      );
+    }
+
+    const resultado = paginarResultados(productosFiltrados, filtros.pagina || 1, filtros.limite || 50);
+
+    const listaConImagenes = resultado.productos.map(producto => ({
+      ...producto,
+      imagenUrl: producto.imagenPrincipal 
+        ? objProductos.construirUrlImagen(producto.imagenPrincipal, `${ctx.request.url.protocol}//${ctx.request.url.host}`)
+        : null
+    }));
+
+    ctx.response.status = 200;
+    ctx.response.body = {
+      success: true,
+      message: resultado.productos.length > 0 ? `${resultado.productos.length} productos encontrados.` : "No se encontraron productos.",
+      data: listaConImagenes,
+      pagination: {
+        total: resultado.total,
+        pagina: resultado.pagina,
+        limite: resultado.limite,
+        totalPaginas: resultado.totalPaginas,
+        hayMasPaginas: resultado.hayMasPaginas
+      }
+    };
+  } catch (error) {
+    console.error("Error en getProductosConInfo:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      message: "Error interno del servidor.",
+    };
+  }
+};
+
+export const buscarProductosAvanzado = async (ctx: Context) => {
+  try {
+    const queryParams = Object.fromEntries(ctx.request.url.searchParams.entries());
+    
+    const criterios = {
+      nombre: queryParams.nombre,
+      categoria: queryParams.categoria ? parseInt(queryParams.categoria) : undefined,
+      ciudad: queryParams.ciudad ? parseInt(queryParams.ciudad) : undefined,
+      departamento: queryParams.departamento ? parseInt(queryParams.departamento) : undefined,
+      region: queryParams.region ? parseInt(queryParams.region) : undefined,
+      precio_min: queryParams.precio_min ? parseFloat(queryParams.precio_min) : undefined,
+      precio_max: queryParams.precio_max ? parseFloat(queryParams.precio_max) : undefined,
+      stock_min: queryParams.stock_min ? parseInt(queryParams.stock_min) : undefined,
+    };
+
+    const objProductos = new ProductosModel();
+    const productos = await objProductos.BuscarProductos(criterios);
+
+    const listaConImagenes = productos.map(producto => ({
+      ...producto,
+      imagenUrl: producto.imagenPrincipal 
+        ? objProductos.construirUrlImagen(producto.imagenPrincipal, `${ctx.request.url.protocol}//${ctx.request.url.host}`)
+        : null
+    }));
+
+    ctx.response.status = 200;
+    ctx.response.body = {
+      success: true,
+      message: productos.length > 0 ? `${productos.length} productos encontrados.` : "No se encontraron productos con los criterios especificados.",
+      data: listaConImagenes,
+      total: productos.length,
+      criterios_aplicados: criterios
+    };
+  } catch (error) {
+    console.error("Error en buscarProductosAvanzado:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      message: "Error interno del servidor.",
+    };
+  }
+};
+
+export const getProductosPorProductor = async (ctx: RouterContext<"/productos/productor/:id">) => {
+  try {
+    const id_usuario = Number(ctx.params.id);
+    
+    if (isNaN(id_usuario) || id_usuario <= 0) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        success: false,
+        message: "ID de usuario inválido.",
+      };
+      return;
+    }
+
+    const objProductos = new ProductosModel();
+    const productos = await objProductos.ObtenerProductosPorProductor(id_usuario);
+
+    const listaConImagenes = productos.map(producto => ({
+      ...producto,
+      imagenUrl: producto.imagenPrincipal 
+        ? objProductos.construirUrlImagen(producto.imagenPrincipal, `${ctx.request.url.protocol}//${ctx.request.url.host}`)
+        : null
+    }));
+
+    ctx.response.status = 200;
+    ctx.response.body = {
+      success: true,
+      message: productos.length > 0 ? `${productos.length} productos encontrados para el productor.` : "No se encontraron productos para este productor.",
+      data: listaConImagenes,
+      total: productos.length
+    };
+  } catch (error) {
+    console.error("Error en getProductosPorProductor:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      message: "Error interno del servidor.",
+    };
+  }
+};
+
+export const getProductoDetallado = async (ctx: RouterContext<"/productos/:id/detalle">) => {
+  try {
+    const id_producto = Number(ctx.params.id);
+    
+    if (isNaN(id_producto) || id_producto <= 0) {
+      ctx.response.status = 404;
+      ctx.response.body = {
+        success: false,
+        message: "ID de producto inválido.",
+      };
+      return;
+    }
+
+    const { conexion } = await import("../Models/Conexion.ts");
+    
+    const producto = await conexion.query(`
+      SELECT 
+        p.*,
+        u.nombre as nombre_productor,
+        u.email as email_productor,
+        u.telefono as telefono_productor,
+        u.direccion as direccion_productor,
+        c.nombre as ciudad_origen,
+        d.nombre as departamento_origen,
+        r.nombre as region_origen,
+        GROUP_CONCAT(cat.nombre) as categorias,
+        AVG(res.calificacion) as calificacion_promedio,
+        COUNT(res.id_resena) as total_resenas
+      FROM productos p
+      INNER JOIN usuarios u ON p.id_usuario = u.id_usuario
+      INNER JOIN ciudades c ON p.id_ciudad_origen = c.id_ciudad
+      INNER JOIN departamentos d ON c.id_departamento = d.id_departamento
+      INNER JOIN regiones r ON d.id_region = r.id_region
+      LEFT JOIN productos_categorias pc ON p.id_producto = pc.id_producto
+      LEFT JOIN categorias cat ON pc.id_categoria = cat.id_categoria AND cat.activa = 1
+      LEFT JOIN resenas res ON p.id_producto = res.id_producto
+      WHERE p.id_producto = ?
+      GROUP BY p.id_producto
+    `, [id_producto]);
+
+    if (producto.length === 0) {
+      ctx.response.status = 404;
+      ctx.response.body = {
+        success: false,
+        message: "Producto no encontrado.",
+      };
+      return;
+    }
+
+    const objProductos = new ProductosModel();
+    const productoDetallado = {
+      ...producto[0],
+      imagenUrl: producto[0].imagenPrincipal 
+        ? objProductos.construirUrlImagen(producto[0].imagenPrincipal, `${ctx.request.url.protocol}//${ctx.request.url.host}`)
+        : null,
+      calificacion_promedio: producto[0].calificacion_promedio ? parseFloat(producto[0].calificacion_promedio).toFixed(1) : null,
+      total_resenas: parseInt(producto[0].total_resenas) || 0
+    };
+
+    ctx.response.status = 200;
+    ctx.response.body = {
+      success: true,
+      message: "Producto encontrado.",
+      data: productoDetallado,
+    };
+  } catch (error) {
+    console.error("Error en getProductoDetallado:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      message: "Error interno del servidor.",
+    };
+  }
+};

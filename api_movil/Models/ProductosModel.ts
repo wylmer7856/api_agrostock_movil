@@ -37,6 +37,148 @@ export class ProductosModel {
         }
     }
 
+    // 📌 Listar productos con información adicional
+    public async ListarProductosConInfo(): Promise<any[]> {
+        try {
+            const result = await conexion.query(`
+                SELECT 
+                    p.*,
+                    u.nombre as nombre_productor,
+                    u.email as email_productor,
+                    u.telefono as telefono_productor,
+                    c.nombre as ciudad_origen,
+                    d.nombre as departamento_origen,
+                    r.nombre as region_origen,
+                    GROUP_CONCAT(cat.nombre) as categorias
+                FROM productos p
+                INNER JOIN usuarios u ON p.id_usuario = u.id_usuario
+                INNER JOIN ciudades c ON p.id_ciudad_origen = c.id_ciudad
+                INNER JOIN departamentos d ON c.id_departamento = d.id_departamento
+                INNER JOIN regiones r ON d.id_region = r.id_region
+                LEFT JOIN productos_categorias pc ON p.id_producto = pc.id_producto
+                LEFT JOIN categorias cat ON pc.id_categoria = cat.id_categoria AND cat.activa = 1
+                GROUP BY p.id_producto
+                ORDER BY p.id_producto DESC
+            `);
+            return result;
+        } catch (error) {
+            console.error("Error al listar productos con info:", error);
+            return [];
+        }
+    }
+
+    // 📌 Buscar productos por criterios
+    public async BuscarProductos(criterios: {
+        nombre?: string;
+        categoria?: number;
+        ciudad?: number;
+        departamento?: number;
+        region?: number;
+        precio_min?: number;
+        precio_max?: number;
+        stock_min?: number;
+    }): Promise<any[]> {
+        try {
+            let query = `
+                SELECT 
+                    p.*,
+                    u.nombre as nombre_productor,
+                    u.email as email_productor,
+                    u.telefono as telefono_productor,
+                    c.nombre as ciudad_origen,
+                    d.nombre as departamento_origen,
+                    r.nombre as region_origen,
+                    GROUP_CONCAT(cat.nombre) as categorias
+                FROM productos p
+                INNER JOIN usuarios u ON p.id_usuario = u.id_usuario
+                INNER JOIN ciudades c ON p.id_ciudad_origen = c.id_ciudad
+                INNER JOIN departamentos d ON c.id_departamento = d.id_departamento
+                INNER JOIN regiones r ON d.id_region = r.id_region
+                LEFT JOIN productos_categorias pc ON p.id_producto = pc.id_producto
+                LEFT JOIN categorias cat ON pc.id_categoria = cat.id_categoria AND cat.activa = 1
+                WHERE 1=1
+            `;
+            
+            const params: any[] = [];
+
+            if (criterios.nombre) {
+                query += " AND p.nombre LIKE ?";
+                params.push(`%${criterios.nombre}%`);
+            }
+
+            if (criterios.categoria) {
+                query += " AND pc.id_categoria = ?";
+                params.push(criterios.categoria);
+            }
+
+            if (criterios.ciudad) {
+                query += " AND p.id_ciudad_origen = ?";
+                params.push(criterios.ciudad);
+            }
+
+            if (criterios.departamento) {
+                query += " AND c.id_departamento = ?";
+                params.push(criterios.departamento);
+            }
+
+            if (criterios.region) {
+                query += " AND d.id_region = ?";
+                params.push(criterios.region);
+            }
+
+            if (criterios.precio_min !== undefined) {
+                query += " AND p.precio >= ?";
+                params.push(criterios.precio_min);
+            }
+
+            if (criterios.precio_max !== undefined) {
+                query += " AND p.precio <= ?";
+                params.push(criterios.precio_max);
+            }
+
+            if (criterios.stock_min !== undefined) {
+                query += " AND p.stock >= ?";
+                params.push(criterios.stock_min);
+            }
+
+            query += " GROUP BY p.id_producto ORDER BY p.id_producto DESC";
+
+            const result = await conexion.query(query, params);
+            return result;
+        } catch (error) {
+            console.error("Error al buscar productos:", error);
+            return [];
+        }
+    }
+
+    // 📌 Obtener productos por productor
+    public async ObtenerProductosPorProductor(id_usuario: number): Promise<any[]> {
+        try {
+            const result = await conexion.query(`
+                SELECT 
+                    p.*,
+                    c.nombre as ciudad_origen,
+                    d.nombre as departamento_origen,
+                    r.nombre as region_origen,
+                    GROUP_CONCAT(cat.nombre) as categorias
+                FROM productos p
+                INNER JOIN ciudades c ON p.id_ciudad_origen = c.id_ciudad
+                INNER JOIN departamentos d ON c.id_departamento = d.id_departamento
+                INNER JOIN regiones r ON d.id_region = r.id_region
+                LEFT JOIN productos_categorias pc ON p.id_producto = pc.id_producto
+                LEFT JOIN categorias cat ON pc.id_categoria = cat.id_categoria AND cat.activa = 1
+                WHERE p.id_usuario = ?
+                GROUP BY p.id_producto
+                ORDER BY p.id_producto DESC
+            `, [id_usuario]);
+            
+            return result;
+        } catch (error) {
+            console.error("Error al obtener productos por productor:", error);
+            return [];
+        }
+    }
+
     public async AgregarProducto(imagenData?: string): Promise<{ success: boolean; message: string; producto?: ProductoData }> {
         try {
             if (!this._objProducto) {

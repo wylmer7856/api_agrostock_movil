@@ -472,6 +472,229 @@ ALTER TABLE `resenas`
 --
 ALTER TABLE `usuarios`
   ADD CONSTRAINT `usuarios_ibfk_1` FOREIGN KEY (`id_ciudad`) REFERENCES `ciudades` (`id_ciudad`);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `mensajes`
+--
+
+CREATE TABLE `mensajes` (
+  `id_mensaje` int(11) NOT NULL,
+  `id_remitente` int(11) NOT NULL,
+  `id_destinatario` int(11) NOT NULL,
+  `id_producto` int(11) DEFAULT NULL,
+  `asunto` varchar(255) NOT NULL,
+  `mensaje` text NOT NULL,
+  `fecha_envio` timestamp NOT NULL DEFAULT current_timestamp(),
+  `leido` tinyint(1) NOT NULL DEFAULT 0,
+  `tipo_mensaje` enum('consulta','pedido','general') NOT NULL DEFAULT 'consulta'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `reportes`
+--
+
+CREATE TABLE `reportes` (
+  `id_reporte` int(11) NOT NULL,
+  `id_usuario_reportado` int(11) DEFAULT NULL,
+  `id_producto_reportado` int(11) DEFAULT NULL,
+  `id_usuario_reportador` int(11) NOT NULL,
+  `tipo_reporte` enum('usuario','producto') NOT NULL,
+  `motivo` varchar(255) NOT NULL,
+  `descripcion` text NOT NULL,
+  `fecha_reporte` timestamp NOT NULL DEFAULT current_timestamp(),
+  `estado` enum('pendiente','en_revision','resuelto','rechazado') NOT NULL DEFAULT 'pendiente',
+  `accion_tomada` text DEFAULT NULL,
+  `fecha_resolucion` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `categorias`
+--
+
+CREATE TABLE `categorias` (
+  `id_categoria` int(11) NOT NULL,
+  `nombre` varchar(100) NOT NULL,
+  `descripcion` text DEFAULT NULL,
+  `activa` tinyint(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `categorias`
+--
+
+INSERT INTO `categorias` (`id_categoria`, `nombre`, `descripcion`, `activa`) VALUES
+(1, 'Frutas', 'Productos frutales frescos', 1),
+(2, 'Verduras', 'Vegetales y hortalizas', 1),
+(3, 'Granos', 'Cereales y legumbres', 1),
+(4, 'Artesanías', 'Productos artesanales locales', 1),
+(5, 'Lácteos', 'Productos lácteos frescos', 1),
+(6, 'Carnes', 'Carnes frescas y procesadas', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `productos_categorias`
+--
+
+CREATE TABLE `productos_categorias` (
+  `id_producto` int(11) NOT NULL,
+  `id_categoria` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `estadisticas_usuarios`
+--
+
+CREATE TABLE `estadisticas_usuarios` (
+  `id_usuario` int(11) NOT NULL,
+  `total_productos` int(11) NOT NULL DEFAULT 0,
+  `total_mensajes_recibidos` int(11) NOT NULL DEFAULT 0,
+  `total_pedidos_recibidos` int(11) NOT NULL DEFAULT 0,
+  `fecha_ultima_actualizacion` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `configuracion_sistema`
+--
+
+CREATE TABLE `configuracion_sistema` (
+  `id_config` int(11) NOT NULL,
+  `clave` varchar(100) NOT NULL,
+  `valor` text NOT NULL,
+  `descripcion` text DEFAULT NULL,
+  `fecha_actualizacion` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `configuracion_sistema`
+--
+
+INSERT INTO `configuracion_sistema` (`id_config`, `clave`, `valor`, `descripcion`) VALUES
+(1, 'stock_minimo_default', '10', 'Stock mínimo por defecto para productos nuevos'),
+(2, 'max_productos_usuario', '50', 'Máximo número de productos por usuario'),
+(3, 'max_imagenes_producto', '5', 'Máximo número de imágenes por producto'),
+(4, 'tiempo_sesion_horas', '24', 'Tiempo de sesión en horas'),
+(5, 'version_api', '1.0.0', 'Versión actual de la API');
+
+--
+-- Índices para las nuevas tablas
+--
+
+--
+-- Indices de la tabla `mensajes`
+--
+ALTER TABLE `mensajes`
+  ADD PRIMARY KEY (`id_mensaje`),
+  ADD KEY `id_remitente` (`id_remitente`),
+  ADD KEY `id_destinatario` (`id_destinatario`),
+  ADD KEY `id_producto` (`id_producto`);
+
+--
+-- Indices de la tabla `reportes`
+--
+ALTER TABLE `reportes`
+  ADD PRIMARY KEY (`id_reporte`),
+  ADD KEY `id_usuario_reportado` (`id_usuario_reportado`),
+  ADD KEY `id_producto_reportado` (`id_producto_reportado`),
+  ADD KEY `id_usuario_reportador` (`id_usuario_reportador`);
+
+--
+-- Indices de la tabla `categorias`
+--
+ALTER TABLE `categorias`
+  ADD PRIMARY KEY (`id_categoria`);
+
+--
+-- Indices de la tabla `productos_categorias`
+--
+ALTER TABLE `productos_categorias`
+  ADD PRIMARY KEY (`id_producto`,`id_categoria`),
+  ADD KEY `id_categoria` (`id_categoria`);
+
+--
+-- Indices de la tabla `estadisticas_usuarios`
+--
+ALTER TABLE `estadisticas_usuarios`
+  ADD PRIMARY KEY (`id_usuario`);
+
+--
+-- Indices de la tabla `configuracion_sistema`
+--
+ALTER TABLE `configuracion_sistema`
+  ADD PRIMARY KEY (`id_config`),
+  ADD UNIQUE KEY `clave` (`clave`);
+
+--
+-- AUTO_INCREMENT de las nuevas tablas
+--
+
+--
+-- AUTO_INCREMENT de la tabla `mensajes`
+--
+ALTER TABLE `mensajes`
+  MODIFY `id_mensaje` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `reportes`
+--
+ALTER TABLE `reportes`
+  MODIFY `id_reporte` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `categorias`
+--
+ALTER TABLE `categorias`
+  MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT de la tabla `configuracion_sistema`
+--
+ALTER TABLE `configuracion_sistema`
+  MODIFY `id_config` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- Restricciones para las nuevas tablas
+--
+
+--
+-- Filtros para la tabla `mensajes`
+--
+ALTER TABLE `mensajes`
+  ADD CONSTRAINT `mensajes_ibfk_1` FOREIGN KEY (`id_remitente`) REFERENCES `usuarios` (`id_usuario`),
+  ADD CONSTRAINT `mensajes_ibfk_2` FOREIGN KEY (`id_destinatario`) REFERENCES `usuarios` (`id_usuario`),
+  ADD CONSTRAINT `mensajes_ibfk_3` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`);
+
+--
+-- Filtros para la tabla `reportes`
+--
+ALTER TABLE `reportes`
+  ADD CONSTRAINT `reportes_ibfk_1` FOREIGN KEY (`id_usuario_reportado`) REFERENCES `usuarios` (`id_usuario`),
+  ADD CONSTRAINT `reportes_ibfk_2` FOREIGN KEY (`id_producto_reportado`) REFERENCES `productos` (`id_producto`),
+  ADD CONSTRAINT `reportes_ibfk_3` FOREIGN KEY (`id_usuario_reportador`) REFERENCES `usuarios` (`id_usuario`);
+
+--
+-- Filtros para la tabla `productos_categorias`
+--
+ALTER TABLE `productos_categorias`
+  ADD CONSTRAINT `productos_categorias_ibfk_1` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`) ON DELETE CASCADE,
+  ADD CONSTRAINT `productos_categorias_ibfk_2` FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id_categoria`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `estadisticas_usuarios`
+--
+ALTER TABLE `estadisticas_usuarios`
+  ADD CONSTRAINT `estadisticas_usuarios_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

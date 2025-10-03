@@ -39,34 +39,26 @@ Content-Type: application/json
 DELETE http://localhost:8000/Usuario/2
 
 
-<<<<<<< HEAD
-
 ###
 
 ### 📌 Filtrar usuarios por ciudad
 GET http://localhost:8000/Usuario/Ciudad/1
-Content-Type: application/json
 
 ###
 
 ### 📌 Filtrar usuarios por departamento
 GET http://localhost:8000/Usuario/Departamento/2
-Content-Type: application/json
 
 ###
 
 ### 📌 Filtrar usuarios por región
 GET http://localhost:8000/Usuario/Region/3
-Content-Type: application/json
 
+###
 
-//___________//_____________//________________//____________________//____________________
-###login
-=======
 ### Autenticación
 
 ### Login
->>>>>>> af2a5c6d6f071a69203a3a0c9d6ae1e1dd7b951b
 POST http://localhost:8000/auth/login
 Content-Type: application/json
 
@@ -255,7 +247,7 @@ Content-Type: application/json
 
 ###
 ### Editar un pedido existente
-PUT http://localhost:8000/Pedido/2
+PUT http://localhost:8000/Pedidos/2
 Content-Type: application/json
 
 {
@@ -273,7 +265,7 @@ Content-Type: application/json
 
 ###
 ### Eliminar un pedido por ID
-DELETE http://localhost:8000/Pedido/2
+DELETE http://localhost:8000/Pedidos/2
 
 
 ### Reseñas
@@ -289,11 +281,7 @@ Content-Type: application/json
 {
   "id_producto": 10,
   "id_pedido": 5,
-<<<<<<< HEAD
-  "comentario": "Excelente producto esta en perfecto estado",
-=======
   "comentario": "Excelente producto, está en perfecto estado",
->>>>>>> af2a5c6d6f071a69203a3a0c9d6ae1e1dd7b951b
   "calificacion": 5,
   "fecha": "2025-09-18"
 }
