@@ -1,4 +1,4 @@
-import { Context } from "../Dependencies/dependencias.ts";
+import { Context, RouterContext } from "../Dependencies/dependencias.ts";
 import { EstadisticasModel } from "../Models/EstadisticasModel.ts";
 
 export class EstadisticasController {
@@ -22,7 +22,7 @@ export class EstadisticasController {
   }
 
   // 📌 Obtener estadísticas de un usuario específico
-  static async ObtenerEstadisticasUsuario(ctx: Context) {
+  static async ObtenerEstadisticasUsuario(ctx: RouterContext<"/estadisticas/usuario/:id_usuario">) {
     try {
       const { id_usuario } = ctx.params;
       const userId = ctx.state.user.id;
@@ -51,7 +51,7 @@ export class EstadisticasController {
   }
 
   // 📌 Actualizar estadísticas de un usuario
-  static async ActualizarEstadisticasUsuario(ctx: Context) {
+  static async ActualizarEstadisticasUsuario(ctx: RouterContext<"/estadisticas/usuario/:id_usuario">) {
     try {
       const { id_usuario } = ctx.params;
       const userId = ctx.state.user.id;

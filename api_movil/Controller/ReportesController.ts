@@ -1,4 +1,4 @@
-import { Context } from "../Dependencies/dependencias.ts";
+import { Context, RouterContext } from "../Dependencies/dependencias.ts";
 import { ReportesModel, ReporteCreateData } from "../Models/ReportesModel.ts";
 
 export class ReportesController {
@@ -57,7 +57,8 @@ export class ReportesController {
   // 📌 Obtener todos los reportes (solo admin)
   static async ObtenerTodosLosReportes(ctx: Context) {
     try {
-      const { estado, tipo } = ctx.request.url.searchParams;
+      const estado = ctx.request.url.searchParams.get('estado');
+      const tipo = ctx.request.url.searchParams.get('tipo');
       const reporteModel = new ReportesModel();
 
       let reportes;
@@ -83,7 +84,7 @@ export class ReportesController {
   }
 
   // 📌 Obtener reportes por estado
-  static async ObtenerReportesPorEstado(ctx: Context) {
+  static async ObtenerReportesPorEstado(ctx: RouterContext<"/reportes/estado/:estado">) {
     try {
       const { estado } = ctx.params;
       const reporteModel = new ReportesModel();
@@ -103,7 +104,7 @@ export class ReportesController {
   }
 
   // 📌 Obtener reportes por tipo
-  static async ObtenerReportesPorTipo(ctx: Context) {
+  static async ObtenerReportesPorTipo(ctx: RouterContext<"/reportes/tipo/:tipo">) {
     try {
       const { tipo } = ctx.params;
       const reporteModel = new ReportesModel();
@@ -123,7 +124,7 @@ export class ReportesController {
   }
 
   // 📌 Actualizar estado del reporte (solo admin)
-  static async ActualizarEstadoReporte(ctx: Context) {
+  static async ActualizarEstadoReporte(ctx: RouterContext<"/reportes/:id_reporte/estado">) {
     try {
       const { id_reporte } = ctx.params;
       const body = await ctx.request.body.json();
@@ -160,7 +161,7 @@ export class ReportesController {
   }
 
   // 📌 Eliminar reporte resuelto (solo admin)
-  static async EliminarReporteResuelto(ctx: Context) {
+  static async EliminarReporteResuelto(ctx: RouterContext<"/reportes/:id_reporte">) {
     try {
       const { id_reporte } = ctx.params;
 

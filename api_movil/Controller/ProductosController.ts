@@ -590,25 +590,25 @@ export const getProductosConInfo = async (ctx: Context) => {
 
     if (filtros.nombre) {
       productosFiltrados = productosFiltrados.filter(producto => 
-        producto.nombre.toLowerCase().includes(filtros.nombre.toLowerCase())
+        producto.nombre.toLowerCase().includes(filtros.nombre!.toLowerCase())
       );
     }
 
     if (filtros.precio_min !== undefined) {
       productosFiltrados = productosFiltrados.filter(producto => 
-        producto.precio >= filtros.precio_min
+        producto.precio >= filtros.precio_min!
       );
     }
 
     if (filtros.precio_max !== undefined) {
       productosFiltrados = productosFiltrados.filter(producto => 
-        producto.precio <= filtros.precio_max
+        producto.precio <= filtros.precio_max!
       );
     }
 
     if (filtros.stock_min !== undefined) {
       productosFiltrados = productosFiltrados.filter(producto => 
-        producto.stock >= filtros.stock_min
+        producto.stock >= filtros.stock_min!
       );
     }
 

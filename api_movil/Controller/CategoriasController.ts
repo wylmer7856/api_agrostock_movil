@@ -1,4 +1,4 @@
-import { Context } from "../Dependencies/dependencias.ts";
+import { Context, RouterContext } from "../Dependencies/dependencias.ts";
 import { CategoriasModel, CategoriaCreateData } from "../Models/CategoriasModel.ts";
 
 export class CategoriasController {
@@ -77,7 +77,7 @@ export class CategoriasController {
   }
 
   // 📌 Actualizar categoría (solo admin)
-  static async ActualizarCategoria(ctx: Context) {
+  static async ActualizarCategoria(ctx: RouterContext<"/categorias/:id_categoria">) {
     try {
       const { id_categoria } = ctx.params;
       const body = await ctx.request.body.json();
@@ -113,7 +113,7 @@ export class CategoriasController {
   }
 
   // 📌 Eliminar categoría (solo admin)
-  static async EliminarCategoria(ctx: Context) {
+  static async EliminarCategoria(ctx: RouterContext<"/categorias/:id_categoria">) {
     try {
       const { id_categoria } = ctx.params;
 
@@ -141,7 +141,7 @@ export class CategoriasController {
   }
 
   // 📌 Obtener categoría por ID
-  static async ObtenerCategoriaPorId(ctx: Context) {
+  static async ObtenerCategoriaPorId(ctx: RouterContext<"/categorias/:id_categoria">) {
     try {
       const { id_categoria } = ctx.params;
 
@@ -172,7 +172,7 @@ export class CategoriasController {
   }
 
   // 📌 Asociar producto con categoría
-  static async AsociarProductoCategoria(ctx: Context) {
+  static async AsociarProductoCategoria(ctx: RouterContext<"/categorias/:id_categoria/productos/:id_producto">) {
     try {
       const { id_producto, id_categoria } = ctx.params;
 
@@ -200,7 +200,7 @@ export class CategoriasController {
   }
 
   // 📌 Desasociar producto de categoría
-  static async DesasociarProductoCategoria(ctx: Context) {
+  static async DesasociarProductoCategoria(ctx: RouterContext<"/categorias/:id_categoria/productos/:id_producto">) {
     try {
       const { id_producto, id_categoria } = ctx.params;
 
@@ -228,7 +228,7 @@ export class CategoriasController {
   }
 
   // 📌 Obtener categorías de un producto
-  static async ObtenerCategoriasDeProducto(ctx: Context) {
+  static async ObtenerCategoriasDeProducto(ctx: RouterContext<"/productos/:id_producto/categorias">) {
     try {
       const { id_producto } = ctx.params;
 
@@ -255,7 +255,7 @@ export class CategoriasController {
   }
 
   // 📌 Obtener productos por categoría
-  static async ObtenerProductosPorCategoria(ctx: Context) {
+  static async ObtenerProductosPorCategoria(ctx: RouterContext<"/categorias/:id_categoria/productos">) {
     try {
       const { id_categoria } = ctx.params;
 

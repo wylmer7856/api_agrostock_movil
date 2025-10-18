@@ -1,4 +1,4 @@
-import { Context } from "../Dependencies/dependencias.ts";
+import { Context, RouterContext } from "../Dependencies/dependencias.ts";
 import { Usuario } from "../Models/UsuariosModel.ts";
 import { ProductosModel } from "../Models/ProductosModel.ts";
 import { ReportesModel } from "../Models/ReportesModel.ts";
@@ -9,7 +9,10 @@ export class AdminController {
   // 📌 Obtener todos los usuarios
   static async ObtenerTodosLosUsuarios(ctx: Context) {
     try {
-      const { rol, ciudad, departamento, region } = ctx.request.url.searchParams;
+      const rol = ctx.request.url.searchParams.get('rol');
+      const ciudad = ctx.request.url.searchParams.get('ciudad');
+      const departamento = ctx.request.url.searchParams.get('departamento');
+      const region = ctx.request.url.searchParams.get('region');
       const usuarioModel = new Usuario();
 
       let usuarios;
@@ -117,7 +120,7 @@ export class AdminController {
   }
 
   // 📌 Editar usuario
-  static async EditarUsuario(ctx: Context) {
+  static async EditarUsuario(ctx: RouterContext<"/admin/usuario/:id_usuario">) {
     try {
       const { id_usuario } = ctx.params;
       const body = await ctx.request.body.json();
@@ -143,7 +146,7 @@ export class AdminController {
         password,
         telefono,
         direccion,
-        id_ciudad: id_ciudad ? parseInt(id_ciudad) : undefined,
+        id_ciudad: id_ciudad ? parseInt(id_ciudad) : 1, // Usar ciudad por defecto si no se especifica
         rol
       };
 
@@ -165,7 +168,7 @@ export class AdminController {
   }
 
   // 📌 Eliminar usuario
-  static async EliminarUsuario(ctx: Context) {
+  static async EliminarUsuario(ctx: RouterContext<"/admin/usuario/:id_usuario">) {
     try {
       const { id_usuario } = ctx.params;
 
@@ -228,7 +231,7 @@ export class AdminController {
   }
 
   // 📌 Eliminar producto inapropiado
-  static async EliminarProductoInapropiado(ctx: Context) {
+  static async EliminarProductoInapropiado(ctx: RouterContext<"/admin/producto/:id_producto">) {
     try {
       const { id_producto } = ctx.params;
       const body = await ctx.request.body.json();
@@ -292,7 +295,7 @@ export class AdminController {
   }
 
   // 📌 Resolver reporte
-  static async ResolverReporte(ctx: Context) {
+  static async ResolverReporte(ctx: RouterContext<"/admin/reporte/:id_reporte">) {
     try {
       const { id_reporte } = ctx.params;
       const body = await ctx.request.body.json();
@@ -329,7 +332,7 @@ export class AdminController {
   }
 
   // 📌 Eliminar reporte resuelto
-  static async EliminarReporteResuelto(ctx: Context) {
+  static async EliminarReporteResuelto(ctx: RouterContext<"/admin/reporte/:id_reporte">) {
     try {
       const { id_reporte } = ctx.params;
 
@@ -393,7 +396,7 @@ export class AdminController {
   }
 
   // 📌 Acceder a panel de productor (simular)
-  static async AccederPanelProductor(ctx: Context) {
+  static async AccederPanelProductor(ctx: RouterContext<"/admin/usuario/:id_usuario/productor">) {
     try {
       const { id_usuario } = ctx.params;
 
@@ -443,7 +446,7 @@ export class AdminController {
   }
 
   // 📌 Acceder a panel de consumidor (simular)
-  static async AccederPanelConsumidor(ctx: Context) {
+  static async AccederPanelConsumidor(ctx: RouterContext<"/admin/usuario/:id_usuario/consumidor">) {
     try {
       const { id_usuario } = ctx.params;
 

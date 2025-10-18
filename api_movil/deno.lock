@@ -286,7 +286,11 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@std/assert@1"
+      "jsr:@std/assert@1",
+      "jsr:@std/dotenv@1",
+      "jsr:@std/encoding@1",
+      "jsr:@std/path@1",
+      "jsr:@std/testing@1"
     ]
   }
 }

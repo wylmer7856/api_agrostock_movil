@@ -1,10 +1,8 @@
 import { Router } from "../Dependencies/dependencias.ts";
 import { 
-  getProductos, 
   getProductoPorId, 
   getProductosPorUsuario, 
   getProductosDisponibles, 
-  buscarProductos, 
   postProducto, 
   putProducto, 
   deleteProducto,

@@ -13,7 +13,7 @@ router.get("/pedidos", AuthMiddleware(['admin']), EstadisticasController.Obtener
 router.get("/mensajes", AuthMiddleware(['admin']), EstadisticasController.ObtenerEstadisticasMensajes);
 
 // 📌 Rutas para estadísticas de usuario
-router.get("/usuario/:id_usuario", AuthMiddleware(['admin', 'consumidor', 'productor']), EstadisticasController.ObtenerEstadisticasUsuario);
-router.put("/usuario/:id_usuario/actualizar", AuthMiddleware(['admin', 'consumidor', 'productor']), EstadisticasController.ActualizarEstadisticasUsuario);
+router.get("/estadisticas/usuario/:id_usuario", AuthMiddleware(['admin', 'consumidor', 'productor']), EstadisticasController.ObtenerEstadisticasUsuario);
+router.put("/estadisticas/usuario/:id_usuario", AuthMiddleware(['admin', 'consumidor', 'productor']), EstadisticasController.ActualizarEstadisticasUsuario);
 
 export { router as EstadisticasRouter };

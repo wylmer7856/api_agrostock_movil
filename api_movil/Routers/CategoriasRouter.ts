@@ -6,18 +6,18 @@ const router = new Router();
 
 // 📌 Rutas públicas para categorías
 router.get("/", CategoriasController.ListarCategorias);
-router.get("/:id_categoria", CategoriasController.ObtenerCategoriaPorId);
-router.get("/:id_categoria/productos", CategoriasController.ObtenerProductosPorCategoria);
-router.get("/producto/:id_producto", CategoriasController.ObtenerCategoriasDeProducto);
+router.get("/categorias/:id_categoria", CategoriasController.ObtenerCategoriaPorId);
+router.get("/categorias/:id_categoria/productos", CategoriasController.ObtenerProductosPorCategoria);
+router.get("/productos/:id_producto/categorias", CategoriasController.ObtenerCategoriasDeProducto);
 
 // 📌 Rutas para administradores
 router.get("/admin/todas", AuthMiddleware(['admin']), CategoriasController.ListarTodasLasCategorias);
 router.post("/admin/crear", AuthMiddleware(['admin']), CategoriasController.CrearCategoria);
-router.put("/admin/:id_categoria", AuthMiddleware(['admin']), CategoriasController.ActualizarCategoria);
-router.delete("/admin/:id_categoria", AuthMiddleware(['admin']), CategoriasController.EliminarCategoria);
+router.put("/categorias/:id_categoria", AuthMiddleware(['admin']), CategoriasController.ActualizarCategoria);
+router.delete("/categorias/:id_categoria", AuthMiddleware(['admin']), CategoriasController.EliminarCategoria);
 
 // 📌 Rutas para asociar productos con categorías
-router.post("/admin/:id_producto/:id_categoria", AuthMiddleware(['admin']), CategoriasController.AsociarProductoCategoria);
-router.delete("/admin/:id_producto/:id_categoria", AuthMiddleware(['admin']), CategoriasController.DesasociarProductoCategoria);
+router.post("/categorias/:id_categoria/productos/:id_producto", AuthMiddleware(['admin']), CategoriasController.AsociarProductoCategoria);
+router.delete("/categorias/:id_categoria/productos/:id_producto", AuthMiddleware(['admin']), CategoriasController.DesasociarProductoCategoria);
 
 export { router as CategoriasRouter };

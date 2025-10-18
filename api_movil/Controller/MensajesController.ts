@@ -1,4 +1,4 @@
-import { Context } from "../Dependencies/dependencias.ts";
+import { Context, RouterContext } from "../Dependencies/dependencias.ts";
 import { MensajesModel, MensajeCreateData } from "../Models/MensajesModel.ts";
 
 export class MensajesController {
@@ -83,10 +83,10 @@ export class MensajesController {
   }
 
   // 📌 Marcar mensaje como leído
-  static async MarcarComoLeido(ctx: Context) {
+  static async MarcarComoLeido(ctx: RouterContext<"/mensajes/:id_mensaje/leer">) {
     try {
       const { id_mensaje } = ctx.params;
-      const userId = ctx.state.user.id;
+      // const userId = ctx.state.user.id; // TODO: Implementar validación de propietario
 
       if (!id_mensaje) {
         ctx.response.status = 400;
@@ -112,10 +112,10 @@ export class MensajesController {
   }
 
   // 📌 Eliminar mensaje
-  static async EliminarMensaje(ctx: Context) {
+  static async EliminarMensaje(ctx: RouterContext<"/mensajes/:id_mensaje">) {
     try {
       const { id_mensaje } = ctx.params;
-      const userId = ctx.state.user.id;
+      // const userId = ctx.state.user.id; // TODO: Implementar validación de propietario
 
       if (!id_mensaje) {
         ctx.response.status = 400;
@@ -160,7 +160,7 @@ export class MensajesController {
   }
 
   // 📌 Obtener conversación
-  static async ObtenerConversacion(ctx: Context) {
+  static async ObtenerConversacion(ctx: RouterContext<"/mensajes/conversacion/:id_usuario">) {
     try {
       const { id_usuario } = ctx.params;
       const userId = ctx.state.user.id;

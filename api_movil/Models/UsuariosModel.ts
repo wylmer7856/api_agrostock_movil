@@ -9,6 +9,33 @@ interface UsuarioData {
   direccion: string;
   id_ciudad: number;
   rol: string;
+  // Campos adicionales de seguridad
+  intentos_login?: number;
+  bloqueado_hasta?: string | null;
+  activo?: boolean;
+  email_verificado?: boolean;
+  telefono_verificado?: boolean;
+  fecha_registro?: string | null;
+  ultimo_acceso?: string | null;
+}
+
+// Interfaz específica para login con todas las propiedades garantizadas
+export interface UsuarioLoginData {
+  id_usuario: number | null;
+  nombre: string;
+  email: string;
+  password: string;
+  telefono: string;
+  direccion: string;
+  id_ciudad: number;
+  rol: string;
+  intentos_login: number;
+  bloqueado_hasta: string | null;
+  activo: boolean;
+  email_verificado: boolean;
+  telefono_verificado: boolean;
+  fecha_registro: string | null;
+  ultimo_acceso: string | null;
 }
 
 export class Usuario {
@@ -134,11 +161,41 @@ export class Usuario {
   }
 
   // 📌 Buscar usuario por email (para login)
-  public async buscarPorEmail(email: string): Promise<UsuarioData | null> {
+  public async buscarPorEmail(email: string): Promise<UsuarioLoginData | null> {
     try {
-      const result = await conexion.query("SELECT * FROM usuarios WHERE email = ? LIMIT 1", [email]);
+      const result = await conexion.query(`
+        SELECT 
+          id_usuario, nombre, email, password, telefono, direccion, id_ciudad, rol,
+          COALESCE(intentos_login, 0) as intentos_login,
+          bloqueado_hasta,
+          COALESCE(activo, 1) as activo,
+          COALESCE(email_verificado, 0) as email_verificado,
+          COALESCE(telefono_verificado, 0) as telefono_verificado,
+          fecha_registro,
+          ultimo_acceso
+        FROM usuarios 
+        WHERE email = ? 
+        LIMIT 1
+      `, [email]);
       if (result.length > 0) {
-        return result[0] as UsuarioData;
+        const user = result[0] as any;
+        return {
+          id_usuario: user.id_usuario,
+          nombre: user.nombre,
+          email: user.email,
+          password: user.password,
+          telefono: user.telefono,
+          direccion: user.direccion,
+          id_ciudad: user.id_ciudad,
+          rol: user.rol,
+          intentos_login: user.intentos_login || 0,
+          bloqueado_hasta: user.bloqueado_hasta,
+          activo: user.activo !== 0,
+          email_verificado: user.email_verificado !== 0,
+          telefono_verificado: user.telefono_verificado !== 0,
+          fecha_registro: user.fecha_registro,
+          ultimo_acceso: user.ultimo_acceso
+        } as UsuarioLoginData;
       }
       return null;
     } catch (error) {

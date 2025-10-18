@@ -12,6 +12,14 @@ const usuarioSchema = z.object({
   rol: z.enum(["admin", "consumidor", "productor"], {
     message: "El rol debe ser admin, consumidor o productor",
   }),
+  // Campos opcionales de seguridad
+  intentos_login: z.number().optional(),
+  bloqueado_hasta: z.string().nullable().optional(),
+  activo: z.boolean().optional(),
+  email_verificado: z.boolean().optional(),
+  telefono_verificado: z.boolean().optional(),
+  fecha_registro: z.string().optional(),
+  ultimo_acceso: z.string().nullable().optional(),
 });
 
 const usuarioSchemaUpdate = usuarioSchema.extend({
@@ -33,7 +41,7 @@ export const getUsuarios = async (ctx: Context) => {
     ctx.response.status = 500;
     ctx.response.body = {
       success: false,
-      message: "Error interno del servidor.",
+      message: error instanceof Error ? error.message : "Error interno del servidor.",
     };
   }
 };
@@ -61,7 +69,8 @@ export const postUsuario = async (ctx: Context) => {
     ctx.response.status = 404;
     ctx.response.body = {
       success: false,
-      message: error instanceof z.ZodError ? "Datos invalidos." : "Error al insertar el usuario.",
+      message: error instanceof z.ZodError ? "Datos invalidos." : 
+               error instanceof Error ? error.message : "Error al insertar el usuario.",
     };
   }
 };
@@ -83,7 +92,8 @@ export const putUsuario = async (ctx: Context) => {
     ctx.response.status = 404;
     ctx.response.body = {
       success: false,
-      message: error instanceof z.ZodError ? "Datos invalidos." : "Error al actualizar el usuario.",
+      message: error instanceof z.ZodError ? "Datos invalidos." : 
+               error instanceof Error ? error.message : "Error al actualizar el usuario.",
     };
   }
 };
@@ -112,29 +122,26 @@ export const deleteUsuario = async (ctx: RouterContext<"/Usuario/:id">) => {
     ctx.response.status = 500;
     ctx.response.body = {
       success: false,
-      message: "Error interno del servidor.",
+      message: error instanceof Error ? error.message : "Error interno del servidor.",
     };
   }
 };
 
 export const filtrarUsuarios = async (ctx: Context) => {
   try {
-    const ciudad = ctx.request.url.searchParams.get("ciudad");
-const departamento = ctx.request.url.searchParams.get("departamento");
-const region = ctx.request.url.searchParams.get("region");
+    // TODO: Implementar filtros cuando se agreguen las funciones correspondientes
+    // const ciudad = ctx.request.url.searchParams.get("ciudad");
+    // const departamento = ctx.request.url.searchParams.get("departamento");
+    // const region = ctx.request.url.searchParams.get("region");
 
     const objUsuario = new Usuario();
-    const lista = await objUsuario.FiltrarUsuarios({
-      ciudad: ciudad || null,
-      departamento: departamento || null,
-      region: region || null,
-    });
+    const lista = await objUsuario.ListarUsuarios();
 
     ctx.response.status = lista.length > 0 ? 200 : 404;
     ctx.response.body = {
       success: lista.length > 0,
       message: lista.length > 0
-        ? "Usuarios encontrados con filtros."
+        ? "Usuarios encontrados."
         : "No se encontraron usuarios.",
       data: lista,
     };
@@ -142,7 +149,7 @@ const region = ctx.request.url.searchParams.get("region");
     ctx.response.status = 500;
     ctx.response.body = {
       success: false,
-      message: "Error interno del servidor al filtrar usuarios.",
+      message: error instanceof Error ? error.message : "Error interno del servidor al filtrar usuarios.",
     };
   }
 };

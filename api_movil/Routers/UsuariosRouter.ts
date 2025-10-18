@@ -16,9 +16,7 @@ UsuariosRouter
   .put("/Usuario", AuthMiddleware(["admin"]), putUsuario)           // Editar usuario
   .delete("/Usuario/:id", AuthMiddleware(["admin"]), deleteUsuario) // Eliminar usuario por ID
 
-UsuariosRouter.get("/Usuario/Ciudad/:id_ciudad", getUsuariosPorCiudad);
-UsuariosRouter.get("/Usuario/Departamento/:id_departamento", getUsuariosPorDepartamento);
-UsuariosRouter.get("/Usuario/Region/:id_region", getUsuariosPorRegion);
+// Rutas adicionales pueden agregarse aquí cuando se implementen las funciones correspondientes
 
 
 export { UsuariosRouter };

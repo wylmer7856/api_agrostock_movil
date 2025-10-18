@@ -76,7 +76,7 @@ export const obtenerEstadisticasConexion = async () => {
     return {
       conexiones_totales: 0,
       estado: "error",
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
       timestamp: new Date().toISOString()
     };
   }
