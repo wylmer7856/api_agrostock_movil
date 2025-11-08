@@ -6,7 +6,7 @@ export class CategoriasController {
   // 📌 Listar categorías activas
   static async ListarCategorias(ctx: Context) {
     try {
-      const categoriaModel = new CategoriasModel();
+      const categoriaModel = new CategoriasModel({} as CategoriaCreateData);
       const categorias = await categoriaModel.ListarCategorias();
 
       ctx.response.status = 200;
@@ -25,7 +25,7 @@ export class CategoriasController {
   // 📌 Listar todas las categorías (solo admin)
   static async ListarTodasLasCategorias(ctx: Context) {
     try {
-      const categoriaModel = new CategoriasModel();
+      const categoriaModel = new CategoriasModel({} as CategoriaCreateData);
       const categorias = await categoriaModel.ListarTodasLasCategorias();
 
       ctx.response.status = 200;
@@ -123,7 +123,7 @@ export class CategoriasController {
         return;
       }
 
-      const categoriaModel = new CategoriasModel();
+      const categoriaModel = new CategoriasModel({} as CategoriaCreateData);
       const result = await categoriaModel.EliminarCategoria(parseInt(id_categoria));
 
       if (result.success) {
@@ -151,7 +151,7 @@ export class CategoriasController {
         return;
       }
 
-      const categoriaModel = new CategoriasModel();
+      const categoriaModel = new CategoriasModel({} as CategoriaCreateData);
       const categoria = await categoriaModel.ObtenerCategoriaPorId(parseInt(id_categoria));
 
       if (categoria) {
@@ -182,7 +182,7 @@ export class CategoriasController {
         return;
       }
 
-      const categoriaModel = new CategoriasModel();
+      const categoriaModel = new CategoriasModel({} as CategoriaCreateData);
       const result = await categoriaModel.AsociarProductoCategoria(parseInt(id_producto), parseInt(id_categoria));
 
       if (result.success) {
@@ -210,7 +210,7 @@ export class CategoriasController {
         return;
       }
 
-      const categoriaModel = new CategoriasModel();
+      const categoriaModel = new CategoriasModel({} as CategoriaCreateData);
       const result = await categoriaModel.DesasociarProductoCategoria(parseInt(id_producto), parseInt(id_categoria));
 
       if (result.success) {
@@ -238,7 +238,7 @@ export class CategoriasController {
         return;
       }
 
-      const categoriaModel = new CategoriasModel();
+      const categoriaModel = new CategoriasModel({} as CategoriaCreateData);
       const categorias = await categoriaModel.ObtenerCategoriasDeProducto(parseInt(id_producto));
 
       ctx.response.status = 200;
@@ -265,7 +265,7 @@ export class CategoriasController {
         return;
       }
 
-      const categoriaModel = new CategoriasModel();
+      const categoriaModel = new CategoriasModel({} as CategoriaCreateData);
       const productos = await categoriaModel.ObtenerProductosPorCategoria(parseInt(id_categoria));
 
       ctx.response.status = 200;

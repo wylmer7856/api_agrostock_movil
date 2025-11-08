@@ -8,8 +8,8 @@ export interface AuditoriaData {
   accion: string;
   tabla_afectada: string;
   id_registro_afectado?: number;
-  datos_antes?: any;
-  datos_despues?: any;
+  datos_antes?: Record<string, unknown>;
+  datos_despues?: Record<string, unknown>;
   ip_address?: string;
   user_agent?: string;
   descripcion?: string;
@@ -33,7 +33,7 @@ export class AuditoriaService {
         if (ctx?.request?.ip) {
           ip_address = ctx.request.ip;
         }
-      } catch (error) {
+      } catch (_error) {
         ip_address = ctx?.request?.headers?.get('x-forwarded-for') || 
                      ctx?.request?.headers?.get('x-real-ip') || 
                      data.ip_address || 
@@ -76,9 +76,9 @@ export class AuditoriaService {
     id_usuario: number,
     cambios: {
       campo?: string;
-      valor_anterior?: any;
-      valor_nuevo?: any;
-      cambios_completos?: any;
+      valor_anterior?: unknown;
+      valor_nuevo?: unknown;
+      cambios_completos?: Record<string, unknown>;
     },
     ctx?: Context,
     motivo?: string
@@ -90,7 +90,7 @@ export class AuditoriaService {
         if (ctx?.request?.ip) {
           ip_address = ctx.request.ip;
         }
-      } catch (error) {
+      } catch (_error) {
         ip_address = ctx?.request?.headers?.get('x-forwarded-for') || 
                      ctx?.request?.headers?.get('x-real-ip') || 
                      null;
@@ -107,9 +107,9 @@ export class AuditoriaService {
           tipo_cambio,
           id_usuario,
           cambios.campo || null,
-          cambios.valor_anterior ? String(changes.valor_anterior) : null,
-          cambios.valor_nuevo ? String(changes.valor_nuevo) : null,
-          cambios.cambios_completos ? JSON.stringify(changes.cambios_completos) : null,
+          cambios.valor_anterior ? String(cambios.valor_anterior) : null,
+          cambios.valor_nuevo ? String(cambios.valor_nuevo) : null,
+          cambios.cambios_completos ? JSON.stringify(cambios.cambios_completos) : null,
           ip_address,
           motivo || null
         ]
@@ -126,7 +126,7 @@ export class AuditoriaService {
   static async obtenerHistorialUsuario(
     id_usuario: number,
     limite: number = 50
-  ): Promise<any[]> {
+  ): Promise<Record<string, unknown>[]> {
     try {
       const result = await conexion.query(
         `SELECT 
@@ -153,7 +153,7 @@ export class AuditoriaService {
   static async obtenerBitacoraRegistro(
     tabla: string,
     id_registro: number
-  ): Promise<any[]> {
+  ): Promise<Record<string, unknown>[]> {
     try {
       const result = await conexion.query(
         `SELECT 
@@ -186,7 +186,7 @@ export class AuditoriaService {
       resultado?: string;
     },
     limite: number = 100
-  ): Promise<any[]> {
+  ): Promise<Record<string, unknown>[]> {
     try {
       let query = `
         SELECT 
@@ -197,7 +197,7 @@ export class AuditoriaService {
         INNER JOIN usuarios u ON aa.id_usuario = u.id_usuario
         WHERE 1=1
       `;
-      const params: any[] = [];
+      const params: unknown[] = [];
 
       if (filtros?.id_usuario) {
         query += ` AND aa.id_usuario = ?`;

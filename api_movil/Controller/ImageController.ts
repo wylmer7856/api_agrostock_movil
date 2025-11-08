@@ -3,7 +3,6 @@
 
 import { Context, RouterContext } from "../Dependencies/dependencias.ts";
 import { imageService } from "../Services/ImageService.ts";
-import { AuthMiddleware } from "../Middlewares/AuthMiddleware.ts";
 
 /**
  * Subir imagen de producto
@@ -27,7 +26,7 @@ export const uploadProductImage = async (ctx: RouterContext<"/images/producto/:i
     // Verificar que el producto pertenece al usuario o es admin
     const { conexion } = await import("../Models/Conexion.ts");
     const producto = await conexion.query(
-      "SELECT id_usuario FROM productos WHERE id_producto = ?",
+      "SELECT id_usuario, imagen_principal FROM productos WHERE id_producto = ?",
       [idProducto]
     );
 
@@ -51,14 +50,17 @@ export const uploadProductImage = async (ctx: RouterContext<"/images/producto/:i
       return;
     }
 
+    // Guardar referencia a la imagen anterior para eliminarla después
+    const imagenAnterior = producto[0].imagen_principal;
+
     // Obtener datos de imagen
     const contentType = ctx.request.headers.get("content-type") || "";
     
     if (contentType.includes("multipart/form-data")) {
       // Intentar leer FormData
       try {
-        const body = ctx.request.body({ type: "form-data" });
-        const formData = await body.value;
+        const body = ctx.request.body;
+        const formData = await body.formData();
         const result = await imageService.saveImageFromFormData(
           formData,
           `productos/${idProducto}`,
@@ -66,6 +68,17 @@ export const uploadProductImage = async (ctx: RouterContext<"/images/producto/:i
         );
 
         if (result.success && result.path) {
+          // Eliminar imagen anterior si existe
+          if (imagenAnterior) {
+            try {
+              await imageService.deleteImage(imagenAnterior);
+              console.log(`Imagen anterior eliminada: ${imagenAnterior}`);
+            } catch (deleteError) {
+              console.error("Error eliminando imagen anterior:", deleteError);
+              // Continuar aunque falle la eliminación de la imagen anterior
+            }
+          }
+
           // Actualizar producto con nueva imagen
           await conexion.execute(
             "UPDATE productos SET imagen_principal = ? WHERE id_producto = ?",
@@ -122,8 +135,19 @@ export const uploadProductImage = async (ctx: RouterContext<"/images/producto/:i
       );
 
       if (result.success && result.path) {
+        // Eliminar imagen anterior si existe
+        if (imagenAnterior) {
+          try {
+            await imageService.deleteImage(imagenAnterior);
+            console.log(`Imagen anterior eliminada: ${imagenAnterior}`);
+          } catch (deleteError) {
+            console.error("Error eliminando imagen anterior:", deleteError);
+            // Continuar aunque falle la eliminación de la imagen anterior
+          }
+        }
+
         await conexion.execute(
-          "UPDATE productos SET imagenPrincipal = ? WHERE id_producto = ?",
+          "UPDATE productos SET imagen_principal = ? WHERE id_producto = ?",
           [result.path, idProducto]
         );
 
@@ -189,8 +213,8 @@ export const uploadProductorProfileImage = async (ctx: Context) => {
 
     if (contentType.includes("multipart/form-data")) {
       try {
-        const body = ctx.request.body({ type: "form-data" });
-        const formData = await body.value;
+        const body = ctx.request.body;
+        const formData = await body.formData();
         const result = await imageService.saveImageFromFormData(
           formData,
           `productores/${user.id}`,

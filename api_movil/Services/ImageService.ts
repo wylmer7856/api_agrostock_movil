@@ -59,6 +59,7 @@ export class ImageService {
       const filePath = join(folderPath, finalFilename);
 
       // Guardar archivo
+      // @ts-ignore - Deno is a global object in Deno runtime
       await Deno.writeFile(filePath, imageBytes);
 
       const relativePath = join("uploads", folder, finalFilename);
@@ -119,9 +120,6 @@ export class ImageService {
       const arrayBuffer = await file.arrayBuffer();
       const imageBytes = new Uint8Array(arrayBuffer);
 
-      // Obtener extensión del nombre del archivo
-      const fileExtension = this.getExtensionFromFilename(file.name) || 'jpg';
-
       // Guardar imagen
       return await this.saveImage(imageBytes, folder, `${Date.now()}_${file.name}`);
     } catch (error) {
@@ -168,6 +166,7 @@ export class ImageService {
       if (filePath.startsWith('/') && filePath.match(/^\/[A-Za-z]:/)) {
         filePath = filePath.substring(1);
       }
+      // @ts-ignore - Deno is a global object in Deno runtime
       const data = await Deno.readFile(filePath);
       const extension = this.getExtensionFromFilename(filePath) || 'jpg';
       return { data, extension };
@@ -199,9 +198,40 @@ export class ImageService {
    */
   async deleteImage(imagePath: string): Promise<boolean> {
     try {
-      const fullPath = join(this.UPLOADS_DIR, imagePath.replace('uploads/', ''));
-      await Deno.remove(fullPath);
-      return true;
+      if (!imagePath) {
+        return false;
+      }
+
+      // Normalizar la ruta: remover "uploads/" si está al inicio, y normalizar separadores
+      const normalizedPath = imagePath.replace(/^uploads[\/\\]/, '').replace(/\\/g, '/');
+      
+      // Si la ruta ya es absoluta o empieza con ./, usar directamente
+      // Si no, construir la ruta completa desde UPLOADS_DIR
+      let fullPath: string;
+      if (normalizedPath.startsWith('./') || normalizedPath.startsWith('/')) {
+        fullPath = normalizedPath;
+      } else {
+        // Construir ruta completa
+        fullPath = join(this.UPLOADS_DIR, normalizedPath);
+      }
+
+      // Verificar que el archivo existe antes de intentar eliminarlo
+      try {
+        // @ts-ignore - Deno is a global object in Deno runtime
+        const stat = await Deno.stat(fullPath);
+        if (stat.isFile) {
+          // @ts-ignore - Deno is a global object in Deno runtime
+          await Deno.remove(fullPath);
+          console.log(`Imagen eliminada exitosamente: ${fullPath}`);
+          return true;
+        }
+      } catch (_statError) {
+        // Si el archivo no existe, no es un error crítico
+        console.log(`Imagen no encontrada (puede que ya fue eliminada): ${fullPath}`);
+        return false;
+      }
+
+      return false;
     } catch (error) {
       console.error("Error eliminando imagen:", error);
       return false;
@@ -215,6 +245,7 @@ export class ImageService {
     try {
       const folderPath = join(this.UPLOADS_DIR, folder);
       if (await this.directoryExists(folderPath)) {
+        // @ts-ignore - Deno is a global object in Deno runtime
         await Deno.remove(folderPath, { recursive: true });
         return true;
       }
@@ -231,9 +262,11 @@ export class ImageService {
   private async ensureDirectory(path: string): Promise<void> {
     try {
       if (!(await this.directoryExists(path))) {
+        // @ts-ignore - Deno is a global object in Deno runtime
         await Deno.mkdir(path, { recursive: true });
       }
     } catch (error) {
+      // @ts-ignore - Deno is a global object in Deno runtime
       if (!(error instanceof Deno.errors.AlreadyExists)) {
         throw error;
       }
@@ -245,6 +278,7 @@ export class ImageService {
    */
   private async directoryExists(path: string): Promise<boolean> {
     try {
+      // @ts-ignore - Deno is a global object in Deno runtime
       const stat = await Deno.stat(path);
       return stat.isDirectory;
     } catch {

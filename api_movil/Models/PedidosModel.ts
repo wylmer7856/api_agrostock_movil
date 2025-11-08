@@ -33,6 +33,34 @@ export class PedidosModel {
     }
   }
 
+  // 📌 Obtener pedidos por productor
+  public async ObtenerPedidosPorProductor(id_productor: number): Promise<PedidoData[]> {
+    try {
+      const result = await conexion.query(
+        "SELECT * FROM pedidos WHERE id_productor = ? ORDER BY fecha_pedido DESC",
+        [id_productor]
+      );
+      return result as PedidoData[];
+    } catch (error) {
+      console.error("Error al obtener pedidos por productor:", error);
+      throw new Error("Error al obtener pedidos del productor.");
+    }
+  }
+
+  // 📌 Obtener pedidos por consumidor
+  public async ObtenerPedidosPorConsumidor(id_consumidor: number): Promise<PedidoData[]> {
+    try {
+      const result = await conexion.query(
+        "SELECT * FROM pedidos WHERE id_consumidor = ? ORDER BY fecha_pedido DESC",
+        [id_consumidor]
+      );
+      return result as PedidoData[];
+    } catch (error) {
+      console.error("Error al obtener pedidos por consumidor:", error);
+      throw new Error("Error al obtener pedidos del consumidor.");
+    }
+  }
+
   public async AgregarPedido(): Promise<{ success: boolean; message: string; pedido?: PedidoData }> {
     try {
       if (!this._objPedido) {

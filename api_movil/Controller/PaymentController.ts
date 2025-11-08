@@ -1,7 +1,7 @@
 // 💳 CONTROLADOR DE PAGOS
 
-import { Context } from "../Dependencies/dependencias.ts";
-import { PaymentService } from "../Services/PaymentService.ts";
+import { Context, RouterContext } from "../Dependencies/dependencias.ts";
+import { PaymentService, type PaymentData } from "../Services/PaymentService.ts";
 import { AuditoriaService } from "../Services/AuditoriaService.ts";
 
 export class PaymentController {
@@ -23,14 +23,14 @@ export class PaymentController {
       }
 
       const body = await ctx.request.body.json();
-      const paymentData: any = {
-        id_pedido: body.id_pedido,
+      const paymentData: PaymentData = {
+        id_pedido: Number(body.id_pedido),
         id_usuario: user.id,
-        monto: body.monto,
-        metodo_pago: body.metodo_pago || 'efectivo',
-        pasarela: body.pasarela,
-        datos_tarjeta: body.datos_tarjeta,
-        datos_adicionales: body.datos_adicionales
+        monto: Number(body.monto),
+        metodo_pago: (body.metodo_pago || 'efectivo') as PaymentData['metodo_pago'],
+        pasarela: body.pasarela as PaymentData['pasarela'],
+        datos_tarjeta: body.datos_tarjeta as PaymentData['datos_tarjeta'],
+        datos_adicionales: body.datos_adicionales as PaymentData['datos_adicionales']
       };
 
       const result = await PaymentService.crearPago(paymentData, ctx);
@@ -41,7 +41,7 @@ export class PaymentController {
         accion: 'crear_pago',
         tabla_afectada: 'pagos',
         id_registro_afectado: result.id_pago,
-        datos_despues: paymentData,
+        datos_despues: paymentData as unknown as Record<string, unknown>,
         resultado: result.success ? 'exitoso' : 'fallido',
         error_message: result.error
       }, ctx);
@@ -62,7 +62,7 @@ export class PaymentController {
   /**
    * Obtener información de un pago
    */
-  static async obtenerPago(ctx: Context) {
+  static async obtenerPago(ctx: RouterContext<"/pagos/:id">) {
     try {
       const user = ctx.state.user;
       if (!user) {
@@ -114,7 +114,7 @@ export class PaymentController {
   /**
    * Obtener pagos de un pedido
    */
-  static async obtenerPagosPorPedido(ctx: Context) {
+  static async obtenerPagosPorPedido(ctx: RouterContext<"/pagos/pedido/:id_pedido">) {
     try {
       const user = ctx.state.user;
       if (!user) {
@@ -156,6 +156,7 @@ export class PaymentController {
 
       // Verificar si es webhook (tiene secret) o admin
       const webhookSecret = ctx.request.headers.get('X-Webhook-Secret');
+      // @ts-ignore - Deno is a global object in Deno runtime
       const isWebhook = webhookSecret === Deno.env.get("WEBHOOK_SECRET");
 
       if (!user && !isWebhook) {

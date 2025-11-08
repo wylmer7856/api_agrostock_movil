@@ -1,7 +1,6 @@
 import { Context, RouterContext } from "../Dependencies/dependencias.ts";
 import { z } from "../Dependencies/dependencias.ts";
 import { ProductoresModel, ProductorData } from "../Models/ProductoresModel.ts";
-import { AuthMiddleware } from "../Middlewares/AuthMiddleware.ts";
 
 // Esquema de validación para productor
 const productorSchema = z.object({
@@ -19,7 +18,7 @@ const productorSchema = z.object({
   hectareas: z.number().min(0).optional().nullable(),
   metodo_produccion: z.enum(['tradicional', 'organico', 'convencional', 'mixto']).optional(),
   redes_sociales: z.any().optional().nullable(),
-  sitio_web: z.string().url().optional().nullable(),
+  sitio_web: z.string().url().optional().nullable().or(z.literal('')),
   foto_perfil_finca: z.string().optional().nullable(),
 });
 
@@ -84,31 +83,43 @@ export const getMiPerfilProductor = async (ctx: Context) => {
     }
 
     const objProductor = new ProductoresModel();
-    const productor = await objProductor.ObtenerPorUsuario(user.id);
+    
+    try {
+      const productor = await objProductor.ObtenerPorUsuario(user.id);
 
-    if (!productor) {
-      ctx.response.status = 404;
+      if (!productor) {
+        ctx.response.status = 200; // Cambiar a 200 para que no sea un error crítico
+        ctx.response.body = {
+          success: false,
+          error: "NO_ENCONTRADO",
+          message: "No se encontró tu perfil de productor. Puedes crear uno nuevo."
+        };
+        return;
+      }
+
+      ctx.response.status = 200;
+      ctx.response.body = {
+        success: true,
+        message: "Perfil de productor encontrado.",
+        data: productor
+      };
+    } catch (dbError) {
+      console.error("Error en getMiPerfilProductor (DB):", dbError);
+      // Si es un error de base de datos, retornar 200 con success: false
+      ctx.response.status = 200;
       ctx.response.body = {
         success: false,
         error: "NO_ENCONTRADO",
-        message: "No se encontró tu perfil de productor. Por favor, complétalo."
+        message: "No se encontró tu perfil de productor. Puedes crear uno nuevo."
       };
-      return;
     }
-
-    ctx.response.status = 200;
-    ctx.response.body = {
-      success: true,
-      message: "Perfil de productor encontrado.",
-      data: productor
-    };
   } catch (error) {
     console.error("Error en getMiPerfilProductor:", error);
-    ctx.response.status = 500;
+    ctx.response.status = 200; // Cambiar a 200 para que el frontend pueda manejar el error
     ctx.response.body = {
       success: false,
       error: "ERROR_INTERNO",
-      message: "Error interno del servidor."
+      message: "No se pudo cargar el perfil. Puedes crear uno nuevo."
     };
   }
 };
@@ -180,11 +191,34 @@ export const postProductor = async (ctx: Context) => {
 
     const body = await ctx.request.body.json();
     
-    // Asegurar que el id_usuario sea el del usuario autenticado
-    const productorData = {
+    // Limpiar campos vacíos y asegurar que el id_usuario sea el del usuario autenticado
+    const productorData: Record<string, unknown> = {
       ...body,
       id_usuario: user.id
     };
+
+    // Limpiar campos vacíos que deben ser null en lugar de string vacío
+    if (productorData.sitio_web === '') {
+      productorData.sitio_web = null;
+    }
+    if (productorData.nombre_finca === '') {
+      productorData.nombre_finca = null;
+    }
+    if (productorData.vereda === '') {
+      productorData.vereda = null;
+    }
+    if (productorData.direccion_finca === '') {
+      productorData.direccion_finca = null;
+    }
+    if (productorData.numero_registro_ica === '') {
+      productorData.numero_registro_ica = null;
+    }
+    if (productorData.certificaciones === '') {
+      productorData.certificaciones = null;
+    }
+    if (productorData.descripcion_actividad === '') {
+      productorData.descripcion_actividad = null;
+    }
 
     const validated = productorSchema.parse(productorData);
 
@@ -210,12 +244,13 @@ export const postProductor = async (ctx: Context) => {
     console.error("Error en postProductor:", error);
     
     if (error instanceof z.ZodError) {
+      const zodError = error as z.ZodError;
       ctx.response.status = 400;
       ctx.response.body = {
         success: false,
         error: "VALIDACION_ERROR",
         message: "Datos inválidos.",
-        errors: error.errors.map(err => ({
+        errors: zodError.errors.map((err: z.ZodIssue) => ({
           field: err.path.join('.'),
           message: err.message
         }))
@@ -293,12 +328,13 @@ export const putProductor = async (ctx: RouterContext<"/productores/:id">) => {
     console.error("Error en putProductor:", error);
     
     if (error instanceof z.ZodError) {
+      const zodError = error as z.ZodError;
       ctx.response.status = 400;
       ctx.response.body = {
         success: false,
         error: "VALIDACION_ERROR",
         message: "Datos inválidos.",
-        errors: error.errors.map(err => ({
+        errors: zodError.errors.map((err: z.ZodIssue) => ({
           field: err.path.join('.'),
           message: err.message
         }))

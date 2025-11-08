@@ -1,7 +1,7 @@
 import { Context, RouterContext } from "../Dependencies/dependencias.ts";
 import { Usuario } from "../Models/UsuariosModel.ts";
 import { ProductosModel } from "../Models/ProductosModel.ts";
-import { ReportesModel } from "../Models/ReportesModel.ts";
+import { ReportesModel, ReporteData } from "../Models/ReportesModel.ts";
 import { EstadisticasModel } from "../Models/EstadisticasModel.ts";
 import { conexion } from "../Models/Conexion.ts";
 
@@ -32,7 +32,7 @@ export class AdminController {
 
       // Obtener información adicional de cada usuario
       const { conexion } = await import("../Models/Conexion.ts");
-      const usuariosConInfo = await Promise.all(usuarios.map(async (usuario: any) => {
+      const usuariosConInfo = await Promise.all(usuarios.map(async (usuario) => {
         try {
           const ciudad = await conexion.query(`
             SELECT c.nombre as ciudad, d.nombre as departamento, r.nombre as region
@@ -127,7 +127,9 @@ export class AdminController {
         telefono,
         direccion,
         id_ciudad: parseInt(id_ciudad),
-        rol
+        rol,
+        activo: true,
+        email_verificado: false
       };
 
       const usuarioModel = new Usuario(usuarioData);
@@ -175,7 +177,9 @@ export class AdminController {
         telefono,
         direccion,
         id_ciudad: id_ciudad ? parseInt(id_ciudad) : 1, // Usar ciudad por defecto si no se especifica
-        rol
+        rol,
+        activo: true,
+        email_verificado: false
       };
 
       const usuarioModel = new Usuario(usuarioData);
@@ -312,7 +316,7 @@ export class AdminController {
       const reportesRaw = await reportesModel.ObtenerTodosLosReportes();
 
       // ✅ Transformar al formato esperado por el frontend
-      const reportes = reportesRaw.map((reporte: any) => ({
+      const reportes = reportesRaw.map((reporte: ReporteData & { nombre_reportador?: string; email_reportador?: string; nombre_producto_reportado?: string; nombre_usuario_reportado?: string }) => ({
         id_reporte: reporte.id_reporte,
         id_usuario_reportante: reporte.id_usuario_reportador,
         tipo_reporte: reporte.tipo_reporte === 'producto' ? 'producto_inapropiado' : 
@@ -322,8 +326,8 @@ export class AdminController {
         motivo: reporte.motivo || '',
         descripcion: reporte.descripcion || '',
         estado: reporte.estado || 'pendiente',
-        fecha_reporte: reporte.fecha_reporte ? new Date(reporte.fecha_reporte).toISOString() : new Date().toISOString(),
-        fecha_resolucion: reporte.fecha_resolucion ? new Date(reporte.fecha_resolucion).toISOString() : undefined,
+        fecha_reporte: reporte.fecha_reporte ? (reporte.fecha_reporte instanceof Date ? reporte.fecha_reporte.toISOString() : new Date(reporte.fecha_reporte as string).toISOString()) : new Date().toISOString(),
+        fecha_resolucion: reporte.fecha_resolucion ? (reporte.fecha_resolucion instanceof Date ? reporte.fecha_resolucion.toISOString() : new Date(reporte.fecha_resolucion as string).toISOString()) : undefined,
         accion_tomada: reporte.accion_tomada || undefined,
         // Campos adicionales para el frontend
         nombre_reportador: reporte.nombre_reportador || 'Usuario desconocido',
@@ -442,7 +446,7 @@ export class AdminController {
           productor: statsRaw.total_productores || 0,
           consumidor: statsRaw.total_consumidores || 0
         },
-        productos_por_categoria: statsRaw.productos_por_categoria?.map((c: any) => ({
+        productos_por_categoria: statsRaw.productos_por_categoria?.map((c: { categoria: string; cantidad: number }) => ({
           nombre: c.categoria,
           cantidad: c.cantidad,
           total: c.cantidad
@@ -489,7 +493,7 @@ export class AdminController {
       let idCounter = 1;
       
       // Usuarios nuevos
-      actividadRaw.usuarios_nuevos?.forEach((item: any) => {
+      actividadRaw.usuarios_nuevos?.forEach((item: { cantidad: number; fecha: string }) => {
         actividad.push({
           id: idCounter++,
           tipo: 'usuario_registrado',
@@ -500,7 +504,7 @@ export class AdminController {
       });
 
       // Productos nuevos
-      actividadRaw.productos_nuevos?.forEach((item: any) => {
+      actividadRaw.productos_nuevos?.forEach((item: { cantidad: number; fecha: string }) => {
         actividad.push({
           id: idCounter++,
           tipo: 'producto_creado',
@@ -511,7 +515,7 @@ export class AdminController {
       });
 
       // Pedidos nuevos
-      actividadRaw.pedidos_nuevos?.forEach((item: any) => {
+      actividadRaw.pedidos_nuevos?.forEach((item: { cantidad: number; fecha: string }) => {
         actividad.push({
           id: idCounter++,
           tipo: 'pedido_realizado',

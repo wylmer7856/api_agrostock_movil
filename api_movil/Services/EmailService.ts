@@ -162,7 +162,7 @@ export class EmailService {
   /**
    * Envía notificación de nuevo pedido
    */
-  async sendOrderNotification(email: string, nombre: string, pedidoId: number, productos: any[]): Promise<{ success: boolean; message: string }> {
+  async sendOrderNotification(email: string, nombre: string, pedidoId: number, productos: Array<{ nombre: string; cantidad: number; unidadMedida?: string; precio_unitario: number }>): Promise<{ success: boolean; message: string }> {
     const html = `
       <!DOCTYPE html>
       <html>
@@ -219,7 +219,7 @@ export class EmailService {
   /**
    * Envía alerta de stock bajo
    */
-  async sendLowStockAlert(email: string, nombre: string, productos: any[]): Promise<{ success: boolean; message: string }> {
+  async sendLowStockAlert(email: string, nombre: string, productos: Array<{ nombre: string; stock_actual: number; stockMinimo: number; unidadMedida?: string }>): Promise<{ success: boolean; message: string }> {
     const html = `
       <!DOCTYPE html>
       <html>
@@ -293,6 +293,7 @@ export class EmailService {
     nombre: string, 
     token: string
   ): Promise<{ success: boolean; message: string }> {
+    // @ts-ignore - Deno is a global object in Deno runtime
     const recoveryUrl = `${Deno.env.get("FRONTEND_URL") || "http://localhost:5173"}/password-recovery?token=${token}`;
     
     const html = `

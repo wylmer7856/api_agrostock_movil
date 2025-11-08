@@ -1,9 +1,19 @@
 import { Context, RouterContext } from "../Dependencies/dependencias.ts";
 import { z } from "../Dependencies/dependencias.ts";
 import { ProductosModel, ProductoData } from "../Models/ProductosModel.ts";
+import { conexion } from "../Models/Conexion.ts";
 
 interface ProductoDataResponse extends ProductoData {
   imagenUrl: string | null;
+}
+
+// Helper function para obtener la URL base de forma segura
+function getBaseUrl(ctx: Context): string {
+  const origin = ctx.request.url.origin;
+  if (typeof origin === 'string' && origin) {
+    return origin;
+  }
+  return 'http://localhost:8000';
 }
 
 const productosSchema = z.object({
@@ -13,12 +23,13 @@ const productosSchema = z.object({
   stock: z.number().min(0),
   stock_minimo: z.number().min(0).optional(),
   id_usuario: z.number().int().positive(),
-  id_categoria: z.number().int().positive().optional(),
-  id_ciudad_origen: z.number().int().positive().optional(),
+  id_categoria: z.number().int().positive().optional().nullable(),
+  id_ciudad_origen: z.number().int().positive().optional().nullable(),
   unidad_medida: z.string().optional(),
   disponible: z.boolean().optional(),
+  imagen_principal: z.string().url().optional().nullable(),
   imagenData: z.string().optional().refine(
-    (val) => {
+    (val: string | undefined) => {
       if (!val) return true;
       if (typeof val !== 'string') return false;
             if (val.startsWith('http://') || val.startsWith('https://')) {
@@ -49,16 +60,16 @@ const productosUpdateSchema = productosSchema.extend({
 
 const filtrosSchema = z.object({
   nombre: z.string().optional(),
-  precio_min: z.string().transform(val => val ? Number(val) : undefined).optional(),
-  precio_max: z.string().transform(val => val ? Number(val) : undefined).optional(),
-  stock_min: z.string().transform(val => val ? Number(val) : undefined).optional(),
-  id_usuario: z.string().transform(val => val ? Number(val) : undefined).optional(),
-  id_ciudad_origen: z.string().transform(val => val ? Number(val) : undefined).optional(),
+  precio_min: z.string().transform((val: string) => val ? Number(val) : undefined).optional(),
+  precio_max: z.string().transform((val: string) => val ? Number(val) : undefined).optional(),
+  stock_min: z.string().transform((val: string) => val ? Number(val) : undefined).optional(),
+  id_usuario: z.string().transform((val: string) => val ? Number(val) : undefined).optional(),
+  id_ciudad_origen: z.string().transform((val: string) => val ? Number(val) : undefined).optional(),
   unidad_medida: z.string().optional(),
-  disponible: z.string().transform(val => val === 'true' ? true : val === 'false' ? false : undefined).optional(),
+  disponible: z.string().transform((val: string) => val === 'true' ? true : val === 'false' ? false : undefined).optional(),
   orden: z.enum(['nombre_asc', 'nombre_desc', 'precio_asc', 'precio_desc', 'stock_asc', 'stock_desc']).optional(),
-  limite: z.string().transform(val => val ? Number(val) : 50).optional(),
-  pagina: z.string().transform(val => val ? Number(val) : 1).optional(),
+  limite: z.string().transform((val: string) => val ? Number(val) : 50).optional(),
+  pagina: z.string().transform((val: string) => val ? Number(val) : 1).optional(),
 });
 
 // deno-lint-ignore no-explicit-any
@@ -165,10 +176,11 @@ export const getProductos = async (ctx: Context) => {
 
     const productosFiltrados = filtrarProductos(lista, filtros);
     const resultado = paginarResultados(productosFiltrados, filtros.pagina || 1, filtros.limite || 50);
+    const baseUrl = getBaseUrl(ctx);
     const listaConImagenes = resultado.productos.map(producto => ({
       ...producto,
       imagenUrl: producto.imagen_principal 
-        ? objProductos.construirUrlImagen(producto.imagen_principal, `${ctx.request.url.protocol}//${ctx.request.url.host}`)
+        ? objProductos.construirUrlImagen(producto.imagen_principal, baseUrl)
         : null
     }));
 
@@ -189,11 +201,12 @@ export const getProductos = async (ctx: Context) => {
   } catch (error) {
     console.error("Error en getProductos:", error);
     if (error instanceof z.ZodError) {
+      const zodError = error as z.ZodError;
       ctx.response.status = 400;
       ctx.response.body = {
         success: false,
         message: "Parámetros de filtro inválidos.",
-        errors: error.errors.map(err => ({
+        errors: zodError.errors.map((err: z.ZodIssue) => ({
           field: err.path.join('.'),
           message: err.message
         }))
@@ -229,11 +242,11 @@ export const getProductosPorUsuario = async (ctx: RouterContext<"/productos/usua
 
     const productosFiltrados = filtrarProductos(lista, filtros);
     const resultado = paginarResultados(productosFiltrados, filtros.pagina || 1, filtros.limite || 50);
-
+    const baseUrl = getBaseUrl(ctx);
     const listaConImagenes = resultado.productos.map(producto => ({
       ...producto,
       imagenUrl: producto.imagen_principal 
-        ? objProductos.construirUrlImagen(producto.imagen_principal, `${ctx.request.url.protocol}//${ctx.request.url.host}`)
+        ? objProductos.construirUrlImagen(producto.imagen_principal, baseUrl)
         : null
     }));
 
@@ -270,11 +283,11 @@ export const getProductosDisponibles = async (ctx: Context) => {
 
     const productosFiltrados = filtrarProductos(lista, filtros);
     const resultado = paginarResultados(productosFiltrados, filtros.pagina || 1, filtros.limite || 50);
-
+    const baseUrl = getBaseUrl(ctx);
     const listaConImagenes = resultado.productos.map(producto => ({
       ...producto,
       imagenUrl: producto.imagen_principal 
-        ? objProductos.construirUrlImagen(producto.imagen_principal, `${ctx.request.url.protocol}//${ctx.request.url.host}`)
+        ? objProductos.construirUrlImagen(producto.imagen_principal, baseUrl)
         : null
     }));
 
@@ -322,11 +335,11 @@ export const buscarProductos = async (ctx: Context) => {
 
     const productosFiltrados = filtrarProductos(lista, filtros);
     const resultado = paginarResultados(productosFiltrados, filtros.pagina || 1, filtros.limite || 50);
-
+    const baseUrl = getBaseUrl(ctx);
     const listaConImagenes = resultado.productos.map(producto => ({
       ...producto,
       imagenUrl: producto.imagen_principal 
-        ? objProductos.construirUrlImagen(producto.imagen_principal, `${ctx.request.url.protocol}//${ctx.request.url.host}`)
+        ? objProductos.construirUrlImagen(producto.imagen_principal, baseUrl)
         : null
     }));
 
@@ -379,10 +392,11 @@ export const getProductoPorId = async (ctx: RouterContext<"/productos/:id">) => 
       return;
     }
 
+    const baseUrl = getBaseUrl(ctx);
     const productoConImagen = {
       ...producto,
       imagenUrl: producto.imagen_principal 
-        ? objProductos.construirUrlImagen(producto.imagen_principal, `${ctx.request.url.protocol}//${ctx.request.url.host}`)
+        ? objProductos.construirUrlImagen(producto.imagen_principal, baseUrl)
         : null
     };
 
@@ -407,7 +421,7 @@ export const postProducto = async (ctx: Context) => {
     const body = await ctx.request.body.json();
     const validated = productosSchema.parse(body);
 
-    const { imagenData, ...productoData } = validated;
+    const { imagenData, imagen_principal, ...productoData } = validated;
 
     const productoCompleto: ProductoData = {
       id_producto: 0,
@@ -417,20 +431,39 @@ export const postProducto = async (ctx: Context) => {
       stock: productoData.stock,
       stock_minimo: productoData.stock_minimo || 5,
       id_usuario: productoData.id_usuario,
-      id_categoria: productoData.id_categoria,
-      id_ciudad_origen: productoData.id_ciudad_origen,
+      id_categoria: productoData.id_categoria ?? undefined,
+      id_ciudad_origen: productoData.id_ciudad_origen ?? undefined,
       unidad_medida: productoData.unidad_medida || 'kg',
       disponible: productoData.disponible !== false,
+      imagen_principal: imagen_principal ?? undefined
     };
 
     const objProductos = new ProductosModel(productoCompleto);
+    // Si hay imagen_principal (URL), actualizarla después de crear el producto
     const result = await objProductos.AgregarProducto(imagenData);
+    
+    // Si se creó exitosamente y hay imagen_principal (URL), actualizarla
+    if (result.success && result.producto && imagen_principal && !imagenData) {
+      await conexion.execute(
+        "UPDATE productos SET imagen_principal = ? WHERE id_producto = ?",
+        [imagen_principal, result.producto.id_producto]
+      );
+      // Recargar el producto con la imagen actualizada
+      const productoActualizado = await conexion.query(
+        "SELECT * FROM productos WHERE id_producto = ?",
+        [result.producto.id_producto]
+      );
+      if (productoActualizado.length > 0) {
+        result.producto = productoActualizado[0] as ProductoData;
+      }
+    }
 
     if (result.success && result.producto) {
+      const baseUrl = getBaseUrl(ctx);
       const productoConUrl: ProductoDataResponse = {
         ...result.producto,
         imagenUrl: result.producto.imagen_principal 
-          ? objProductos.construirUrlImagen(result.producto.imagen_principal, `${ctx.request.url.protocol}//${ctx.request.url.host}`)
+          ? objProductos.construirUrlImagen(result.producto.imagen_principal, baseUrl)
           : null
       };
 
@@ -452,12 +485,13 @@ export const postProducto = async (ctx: Context) => {
     console.error("Error en postProducto:", error);
     
     if (error instanceof z.ZodError) {
+      const zodError = error as z.ZodError;
       ctx.response.status = 400; // Bad Request para errores de validación
       ctx.response.body = {
         success: false,
         error: "VALIDATION_ERROR",
         message: "Datos inválidos.",
-        errors: error.errors.map(err => ({
+        errors: zodError.errors.map((err: z.ZodIssue) => ({
           field: err.path.join('.'),
           message: err.message
         }))
@@ -513,8 +547,8 @@ export const putProducto = async (ctx: RouterContext<"/productos/:id">) => {
       stock: productoData.stock,
       stock_minimo: productoData.stock_minimo || 5,
       id_usuario: productoData.id_usuario,
-      id_categoria: productoData.id_categoria,
-      id_ciudad_origen: productoData.id_ciudad_origen,
+      id_categoria: productoData.id_categoria ?? undefined,
+      id_ciudad_origen: productoData.id_ciudad_origen ?? undefined,
       unidad_medida: productoData.unidad_medida || 'kg',
       disponible: productoData.disponible !== false,
       imagen_principal: productoExiste.imagen_principal,
@@ -533,12 +567,13 @@ export const putProducto = async (ctx: RouterContext<"/productos/:id">) => {
     console.error("Error en putProducto:", error);
     
     if (error instanceof z.ZodError) {
+      const zodError = error as z.ZodError;
       ctx.response.status = 400; // Bad Request para errores de validación
       ctx.response.body = {
         success: false,
         error: "VALIDATION_ERROR",
         message: "Datos inválidos.",
-        errors: error.errors.map(err => ({
+        errors: zodError.errors.map((err: z.ZodIssue) => ({
           field: err.path.join('.'),
           message: err.message
         }))
@@ -565,6 +600,27 @@ export const deleteProducto = async (ctx: RouterContext<"/productos/:id">) => {
         message: "ID de producto invalido.",
       };
       return;
+    }
+
+    // Obtener información del producto antes de eliminarlo para borrar la imagen
+    const { conexion } = await import("../Models/Conexion.ts");
+    const producto = await conexion.query(
+      "SELECT imagen_principal FROM productos WHERE id_producto = ?",
+      [id_producto]
+    );
+
+    // Eliminar imagen si existe
+    if (producto.length > 0 && producto[0].imagen_principal) {
+      try {
+        const { imageService } = await import("../Services/ImageService.ts");
+        // Eliminar la imagen individual
+        await imageService.deleteImage(producto[0].imagen_principal);
+        // También intentar eliminar la carpeta del producto si existe
+        await imageService.deleteFolder(`productos/${id_producto}`);
+      } catch (imageError) {
+        console.error("Error eliminando imagen del producto:", imageError);
+        // Continuar con la eliminación del producto aunque falle la eliminación de la imagen
+      }
     }
 
     const objProductos = new ProductosModel();
@@ -596,38 +652,38 @@ export const getProductosConInfo = async (ctx: Context) => {
     const lista = await objProductos.ListarProductosConInfo();
 
     // Aplicar filtros básicos
-    let productosFiltrados = [...lista];
+    let productosFiltrados: ProductoData[] = [...(lista as unknown as ProductoData[])];
 
     if (filtros.nombre) {
-      productosFiltrados = productosFiltrados.filter(producto => 
+      productosFiltrados = productosFiltrados.filter((producto: ProductoData) => 
         producto.nombre.toLowerCase().includes(filtros.nombre!.toLowerCase())
       );
     }
 
     if (filtros.precio_min !== undefined) {
-      productosFiltrados = productosFiltrados.filter(producto => 
+      productosFiltrados = productosFiltrados.filter((producto: ProductoData) => 
         producto.precio >= filtros.precio_min!
       );
     }
 
     if (filtros.precio_max !== undefined) {
-      productosFiltrados = productosFiltrados.filter(producto => 
+      productosFiltrados = productosFiltrados.filter((producto: ProductoData) => 
         producto.precio <= filtros.precio_max!
       );
     }
 
     if (filtros.stock_min !== undefined) {
-      productosFiltrados = productosFiltrados.filter(producto => 
+      productosFiltrados = productosFiltrados.filter((producto: ProductoData) => 
         producto.stock >= filtros.stock_min!
       );
     }
 
     const resultado = paginarResultados(productosFiltrados, filtros.pagina || 1, filtros.limite || 50);
-
+    const baseUrl = getBaseUrl(ctx);
     const listaConImagenes = resultado.productos.map(producto => ({
       ...producto,
       imagenUrl: producto.imagen_principal 
-        ? objProductos.construirUrlImagen(producto.imagen_principal, `${ctx.request.url.protocol}//${ctx.request.url.host}`)
+        ? objProductos.construirUrlImagen(producto.imagen_principal, baseUrl)
         : null
     }));
 
@@ -672,12 +728,16 @@ export const buscarProductosAvanzado = async (ctx: Context) => {
     const objProductos = new ProductosModel();
     const productos = await objProductos.BuscarProductos(criterios);
 
-    const listaConImagenes = productos.map(producto => ({
-      ...producto,
-      imagenUrl: producto.imagen_principal 
-        ? objProductos.construirUrlImagen(producto.imagen_principal, `${ctx.request.url.protocol}//${ctx.request.url.host}`)
-        : null
-    }));
+    const baseUrl = getBaseUrl(ctx);
+    const listaConImagenes = productos.map((producto: any) => {
+      const imagenPrincipal = typeof producto.imagen_principal === 'string' ? producto.imagen_principal : null;
+      return {
+        ...producto,
+        imagenUrl: imagenPrincipal 
+          ? objProductos.construirUrlImagen(imagenPrincipal, baseUrl)
+          : null
+      };
+    });
 
     ctx.response.status = 200;
     ctx.response.body = {
@@ -713,12 +773,16 @@ export const getProductosPorProductor = async (ctx: RouterContext<"/productos/pr
     const objProductos = new ProductosModel();
     const productos = await objProductos.ObtenerProductosPorProductor(id_usuario);
 
-    const listaConImagenes = productos.map(producto => ({
-      ...producto,
-      imagenUrl: producto.imagen_principal 
-        ? objProductos.construirUrlImagen(producto.imagen_principal, `${ctx.request.url.protocol}//${ctx.request.url.host}`)
-        : null
-    }));
+    const baseUrl = getBaseUrl(ctx);
+    const listaConImagenes = productos.map((producto: any) => {
+      const imagenPrincipal = typeof producto.imagen_principal === 'string' ? producto.imagen_principal : null;
+      return {
+        ...producto,
+        imagenUrl: imagenPrincipal 
+          ? objProductos.construirUrlImagen(imagenPrincipal, baseUrl)
+          : null
+      };
+    });
 
     ctx.response.status = 200;
     ctx.response.body = {
@@ -787,10 +851,11 @@ export const getProductoDetallado = async (ctx: RouterContext<"/productos/:id/de
     }
 
     const objProductos = new ProductosModel();
+    const baseUrl = getBaseUrl(ctx);
     const productoDetallado = {
       ...producto[0],
       imagenUrl: producto[0].imagenPrincipal 
-        ? objProductos.construirUrlImagen(producto[0].imagenPrincipal, `${ctx.request.url.protocol}//${ctx.request.url.host}`)
+        ? objProductos.construirUrlImagen(producto[0].imagenPrincipal, baseUrl)
         : null,
       calificacion_promedio: producto[0].calificacion_promedio ? parseFloat(producto[0].calificacion_promedio).toFixed(1) : null,
       total_resenas: parseInt(producto[0].total_resenas) || 0

@@ -8,7 +8,7 @@ const resenaSchema = z.object({
   id_producto: z.number().int().positive(),
   calificacion: z.number().min(1).max(5),
   comentario: z.string().min(3),
-  fecha: z.string().transform((val) => new Date(val)),
+  fecha: z.string().transform((val: string) => new Date(val)),
 });
 
 const resenaSchemaUpdate = resenaSchema.extend({
@@ -27,7 +27,7 @@ export const getResenas = async (ctx: Context) => {
       message: lista.length > 0 ? "Reseñas encontradas." : "No se encontraron reseñas.",
       data: lista,
     };
-  } catch (error) {
+  } catch (_error) {
     ctx.response.status = 500;
     ctx.response.body = {
       success: false,
@@ -66,7 +66,7 @@ export const postResena = async (ctx: Context) => {
 };
 
 // 📌 Editar reseña
-export const putResena = async (ctx: Context) => {
+export const putResena = async (ctx: RouterContext<"/resenas/:id">) => {
   try {
     const body = await ctx.request.body.json();
     const validated = resenaSchemaUpdate.parse(body);
@@ -89,7 +89,7 @@ export const putResena = async (ctx: Context) => {
 };
 
 // 📌 Eliminar reseña
-export const deleteResena = async (ctx: RouterContext<"/Resena/:id">) => {
+export const deleteResena = async (ctx: RouterContext<"/resenas/:id">) => {
   try {
     const id_resena = Number(ctx.params.id);
     if (isNaN(id_resena) || id_resena <= 0) {
@@ -109,7 +109,7 @@ export const deleteResena = async (ctx: RouterContext<"/Resena/:id">) => {
       success: result.success,
       message: result.message,
     };
-  } catch (error) {
+  } catch (_error) {
     ctx.response.status = 500;
     ctx.response.body = {
       success: false,
@@ -119,7 +119,7 @@ export const deleteResena = async (ctx: RouterContext<"/Resena/:id">) => {
 };
 
 // 📌 Buscar reseñas de un producto
-export const getResenasByProducto = async (ctx: RouterContext<"/Resena/Producto/:id">) => {
+export const getResenasByProducto = async (ctx: RouterContext<"/resenas/producto/:id">) => {
   try {
     const id_producto = Number(ctx.params.id);
     if (isNaN(id_producto) || id_producto <= 0) {
@@ -140,7 +140,7 @@ export const getResenasByProducto = async (ctx: RouterContext<"/Resena/Producto/
       message: lista.length > 0 ? "Reseñas encontradas para el producto." : "No se encontraron reseñas para este producto.",
       data: lista,
     };
-  } catch (error) {
+  } catch (_error) {
     ctx.response.status = 500;
     ctx.response.body = {
       success: false,

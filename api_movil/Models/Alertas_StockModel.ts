@@ -43,9 +43,9 @@ export class AlertasModel {
 
       if (producto.stock === 0) {
         mensaje = `¡URGENTE! El producto "${producto.nombre}" esta sin stock.`;
-      } else if (producto.stock <= Math.floor(producto.stockMinimo * 0.5)) {
+      } else if (producto.stock <= Math.floor((producto.stock_minimo || 0) * 0.5)) {
         mensaje = `¡CRiTICO! El producto "${producto.nombre}" tiene stock critico (${producto.stock} unidades).`;
-      } else if (producto.stock <= producto.stockMinimo) {
+      } else if (producto.stock <= (producto.stock_minimo || 0)) {
         mensaje = `¡ATENCIoN! El producto "${producto.nombre}" tiene stock bajo (${producto.stock} unidades).`;
       } else {
         return;
@@ -84,7 +84,7 @@ export class AlertasModel {
     try {
       await conexion.execute("START TRANSACTION");
 
-      const productos = await conexion.query(`SELECT id_producto, nombre, stock, stockMinimo FROM productos WHERE stock <= stockMinimo OR stock = 0`) as ProductoData[];
+      const productos = await conexion.query(`SELECT id_producto, nombre, stock, stock_minimo FROM productos WHERE stock <= stock_minimo OR stock = 0`) as ProductoData[];
 
       let alertasCreadas = 0;
 

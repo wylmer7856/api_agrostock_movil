@@ -16,7 +16,7 @@ export interface PaymentData {
     fecha_expiracion?: string;
     nombre_titular?: string;
   };
-  datos_adicionales?: any;
+  datos_adicionales?: Record<string, unknown>;
 }
 
 export interface PaymentResponse {
@@ -30,9 +30,13 @@ export interface PaymentResponse {
 }
 
 export class PaymentService {
+  // @ts-ignore - Deno is a global object in Deno runtime
   private static readonly WOMPI_PUBLIC_KEY = Deno.env.get("WOMPI_PUBLIC_KEY") || "";
+  // @ts-ignore - Deno is a global object in Deno runtime
   private static readonly WOMPI_PRIVATE_KEY = Deno.env.get("WOMPI_PRIVATE_KEY") || "";
+  // @ts-ignore - Deno is a global object in Deno runtime
   private static readonly PAYU_API_KEY = Deno.env.get("PAYU_API_KEY") || "";
+  // @ts-ignore - Deno is a global object in Deno runtime
   private static readonly PAYU_MERCHANT_ID = Deno.env.get("PAYU_MERCHANT_ID") || "";
 
   /**
@@ -40,7 +44,7 @@ export class PaymentService {
    */
   static async crearPago(
     data: PaymentData,
-    ctx?: Context
+    _ctx?: Context
   ): Promise<PaymentResponse> {
     try {
       // Validar monto
@@ -106,7 +110,7 @@ export class PaymentService {
    */
   private static async procesarConWompi(
     id_pago: number,
-    data: PaymentData
+    _data: PaymentData
   ): Promise<PaymentResponse> {
     try {
       // Actualizar estado a procesando
@@ -183,7 +187,7 @@ export class PaymentService {
    */
   private static async procesarConPayU(
     id_pago: number,
-    data: PaymentData
+    _data: PaymentData
   ): Promise<PaymentResponse> {
     try {
       await this.actualizarEstadoPago(id_pago, 'procesando', 'Procesando con PayU');
@@ -305,7 +309,7 @@ export class PaymentService {
               estado_pedido: nuevoEstadoPedido
             }
           },
-          null,
+          undefined,
           'Sincronización automática con estado de pago'
         );
       }
@@ -343,13 +347,13 @@ export class PaymentService {
   /**
    * Obtener información de un pago
    */
-  static async obtenerPago(id_pago: number): Promise<any> {
+  static async obtenerPago(id_pago: number): Promise<Record<string, unknown> | null> {
     try {
       const [pago] = await conexion.query(
         `SELECT * FROM pagos WHERE id_pago = ?`,
         [id_pago]
       );
-      return pago;
+      return pago as Record<string, unknown> | null;
     } catch (error) {
       console.error("Error obteniendo pago:", error);
       return null;
@@ -359,13 +363,13 @@ export class PaymentService {
   /**
    * Obtener pagos de un pedido
    */
-  static async obtenerPagosPorPedido(id_pedido: number): Promise<any[]> {
+  static async obtenerPagosPorPedido(id_pedido: number): Promise<Record<string, unknown>[]> {
     try {
       const pagos = await conexion.query(
         `SELECT * FROM pagos WHERE id_pedido = ? ORDER BY fecha_creacion DESC`,
         [id_pedido]
       );
-      return pagos;
+      return pagos as Record<string, unknown>[];
     } catch (error) {
       console.error("Error obteniendo pagos:", error);
       return [];

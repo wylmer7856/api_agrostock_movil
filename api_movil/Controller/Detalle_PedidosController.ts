@@ -41,6 +41,7 @@ export const postDetalle = async (ctx: Context) => {
     const data = {
       id_detalle: null,
       ...validated,
+      subtotal: validated.precio_total, // subtotal es igual a precio_total
     };
 
     const model = new DetallePedidosModel(data);

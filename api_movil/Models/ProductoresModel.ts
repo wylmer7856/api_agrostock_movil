@@ -15,7 +15,7 @@ export interface ProductorData {
   anos_experiencia?: number | null;
   hectareas?: number | null;
   metodo_produccion?: 'tradicional' | 'organico' | 'convencional' | 'mixto';
-  redes_sociales?: any | null;
+  redes_sociales?: Record<string, unknown> | null;
   sitio_web?: string | null;
   foto_perfil_finca?: string | null;
   activo?: boolean;
@@ -45,14 +45,68 @@ export class ProductoresModel {
   // 📌 Obtener productor por ID de usuario
   public async ObtenerPorUsuario(id_usuario: number): Promise<ProductorCompleto | null> {
     try {
+      // Obtener datos del usuario/productor desde la tabla usuarios
       const result = await conexion.query(`
-        SELECT * FROM vista_productores_completa 
-        WHERE id_usuario = ?
+        SELECT 
+          u.id_usuario,
+          u.nombre,
+          u.email,
+          u.telefono,
+          u.direccion,
+          u.id_ciudad,
+          u.rol,
+          u.activo,
+          u.email_verificado,
+          u.foto_perfil,
+          u.fecha_registro,
+          u.ultimo_acceso,
+          c.nombre as ciudad_nombre,
+          d.nombre as departamento_nombre,
+          r.nombre as region_nombre,
+          (SELECT COUNT(*) FROM productos WHERE id_usuario = u.id_usuario AND disponible = 1) as total_productos_activos
+        FROM usuarios u
+        LEFT JOIN ciudades c ON u.id_ciudad = c.id_ciudad
+        LEFT JOIN departamentos d ON c.id_departamento = d.id_departamento
+        LEFT JOIN regiones r ON d.id_region = r.id_region
+        WHERE u.id_usuario = ? AND u.rol = 'productor' AND u.activo = 1
       `, [id_usuario]);
 
       if (result.length > 0) {
-        return result[0] as ProductorCompleto;
+        const usuario = result[0];
+        // Mapear los datos a la estructura ProductorCompleto
+        return {
+          id_productor: Number(usuario.id_usuario), // Usar id_usuario como id_productor
+          id_usuario: Number(usuario.id_usuario),
+          nombre: String(usuario.nombre || ''),
+          email: String(usuario.email || ''),
+          telefono: usuario.telefono ? String(usuario.telefono) : null,
+          direccion: usuario.direccion ? String(usuario.direccion) : null,
+          ciudad_nombre: usuario.ciudad_nombre ? String(usuario.ciudad_nombre) : null,
+          departamento_nombre: usuario.departamento_nombre ? String(usuario.departamento_nombre) : null,
+          region_nombre: usuario.region_nombre ? String(usuario.region_nombre) : null,
+          total_productos_activos: Number(usuario.total_productos_activos) || 0,
+          // Campos opcionales que pueden no existir en usuarios
+          nombre_finca: null,
+          tipo_productor: undefined,
+          id_departamento: null,
+          id_ciudad: usuario.id_ciudad ? Number(usuario.id_ciudad) : null,
+          vereda: null,
+          direccion_finca: null,
+          numero_registro_ica: null,
+          certificaciones: null,
+          descripcion_actividad: null,
+          anos_experiencia: null,
+          hectareas: null,
+          metodo_produccion: undefined,
+          redes_sociales: null,
+          sitio_web: null,
+          foto_perfil_finca: null,
+          activo: Boolean(usuario.activo === 1 || usuario.activo === true),
+          fecha_creacion: usuario.fecha_registro ? String(usuario.fecha_registro) : null,
+          fecha_actualizacion: null
+        } as ProductorCompleto;
       }
+      
       return null;
     } catch (error) {
       console.error("Error al obtener productor por usuario:", error);
@@ -106,7 +160,7 @@ export class ProductoresModel {
         SELECT * FROM vista_productores_completa 
         WHERE activo = 1
       `;
-      const params: any[] = [];
+      const params: unknown[] = [];
 
       if (criterios.tipo_productor) {
         query += " AND tipo_productor = ?";
@@ -174,7 +228,7 @@ export class ProductoresModel {
 
       if (existe.length > 0) {
         // Actualizar
-        const { id_productor, ...datosActualizacion } = this._objProductor;
+        const { id_productor: _id_productor, ...datosActualizacion } = this._objProductor;
         const campos = Object.keys(datosActualizacion).filter(key => datosActualizacion[key as keyof typeof datosActualizacion] !== undefined);
         
         if (campos.length === 0) {
@@ -200,7 +254,7 @@ export class ProductoresModel {
         return {
           success: true,
           message: "Perfil de productor actualizado exitosamente.",
-          productor: productorActualizado as any
+          productor: productorActualizado as ProductorCompleto
         };
       } else {
         // Crear nuevo
@@ -246,7 +300,7 @@ export class ProductoresModel {
           return {
             success: true,
             message: "Perfil de productor creado exitosamente.",
-            productor: nuevoProductor as any
+            productor: nuevoProductor as ProductorCompleto
           };
         } else {
           await conexion.execute("ROLLBACK");

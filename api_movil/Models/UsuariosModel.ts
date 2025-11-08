@@ -31,6 +31,9 @@ export interface UsuarioLoginData {
   foto_perfil: string | null;
   fecha_registro: string | null;
   ultimo_acceso: string | null;
+  intentos_sms?: number | null;
+  codigo_sms_expiracion?: string | Date | null;
+  codigo_verificacion_sms?: string | null;
 }
 
 export class Usuario {
@@ -179,7 +182,10 @@ export class Usuario {
           COALESCE(email_verificado, 0) as email_verificado,
           foto_perfil,
           fecha_registro,
-          ultimo_acceso
+          ultimo_acceso,
+          intentos_sms,
+          codigo_sms_expiracion,
+          codigo_verificacion_sms
         FROM usuarios 
         WHERE email = ? 
         LIMIT 1
@@ -199,7 +205,10 @@ export class Usuario {
           email_verificado: user.email_verificado !== 0,
           foto_perfil: user.foto_perfil || null,
           fecha_registro: user.fecha_registro,
-          ultimo_acceso: user.ultimo_acceso
+          ultimo_acceso: user.ultimo_acceso,
+          intentos_sms: user.intentos_sms ?? null,
+          codigo_sms_expiracion: user.codigo_sms_expiracion ?? null,
+          codigo_verificacion_sms: user.codigo_verificacion_sms ?? null
         } as UsuarioLoginData;
       }
       return null;

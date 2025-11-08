@@ -24,6 +24,7 @@ export async function staticFilesMiddleware(ctx: Context, next: () => Promise<un
     // Verificar que el archivo existe
     let fileInfo;
     try {
+      // @ts-ignore - Deno is a global object in Deno runtime
       fileInfo = await Deno.stat(fullPath);
     } catch {
       ctx.response.status = 404;
@@ -47,6 +48,7 @@ export async function staticFilesMiddleware(ctx: Context, next: () => Promise<un
     }
 
     // Leer el archivo
+    // @ts-ignore - Deno is a global object in Deno runtime
     const fileContent = await Deno.readFile(fullPath);
 
     // Determinar el tipo MIME

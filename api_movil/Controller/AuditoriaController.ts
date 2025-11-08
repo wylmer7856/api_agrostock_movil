@@ -1,8 +1,7 @@
 // 📋 CONTROLADOR DE AUDITORÍA
 
-import { Context } from "../Dependencies/dependencias.ts";
+import { Context, RouterContext } from "../Dependencies/dependencias.ts";
 import { AuditoriaService } from "../Services/AuditoriaService.ts";
-import { AuthMiddleware } from "../Middlewares/AuthMiddleware.ts";
 
 export class AuditoriaController {
   
@@ -45,7 +44,7 @@ export class AuditoriaController {
   /**
    * Obtener bitácora de cambios de un registro
    */
-  static async obtenerBitacoraRegistro(ctx: Context) {
+  static async obtenerBitacoraRegistro(ctx: RouterContext<"/auditoria/bitacora/:tabla/:id">) {
     try {
       const user = ctx.state.user;
       if (!user || user.rol !== 'admin') {
@@ -105,17 +104,24 @@ export class AuditoriaController {
         return;
       }
 
-      const filtros: any = {};
+      const filtros: {
+        id_usuario?: number;
+        accion?: string;
+        tabla_afectada?: string;
+        fecha_desde?: Date;
+        fecha_hasta?: Date;
+        resultado?: string;
+      } = {};
       const params = ctx.request.url.searchParams;
 
       if (params.get("id_usuario")) {
         filtros.id_usuario = parseInt(params.get("id_usuario")!);
       }
       if (params.get("accion")) {
-        filtros.accion = params.get("accion");
+        filtros.accion = params.get("accion") || undefined;
       }
       if (params.get("tabla")) {
-        filtros.tabla_afectada = params.get("tabla");
+        filtros.tabla_afectada = params.get("tabla") || undefined;
       }
       if (params.get("fecha_desde")) {
         filtros.fecha_desde = new Date(params.get("fecha_desde")!);
@@ -124,7 +130,7 @@ export class AuditoriaController {
         filtros.fecha_hasta = new Date(params.get("fecha_hasta")!);
       }
       if (params.get("resultado")) {
-        filtros.resultado = params.get("resultado");
+        filtros.resultado = params.get("resultado") || undefined;
       }
 
       const limite = parseInt(params.get("limite") || "100");

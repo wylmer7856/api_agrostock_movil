@@ -47,7 +47,7 @@ export class ProductosModel {
     }
 
     // 📌 Listar productos con información adicional
-    public async ListarProductosConInfo(): Promise<any[]> {
+    public async ListarProductosConInfo(): Promise<Record<string, unknown>[]> {
         try {
             const result = await conexion.query(`
                 SELECT 
@@ -87,7 +87,7 @@ export class ProductosModel {
         precio_min?: number;
         precio_max?: number;
         stock_min?: number;
-    }): Promise<any[]> {
+    }): Promise<Record<string, unknown>[]> {
         try {
             let query = `
                 SELECT 
@@ -108,7 +108,7 @@ export class ProductosModel {
                 WHERE p.disponible = 1
             `;
             
-            const params: any[] = [];
+            const params: unknown[] = [];
 
             if (criterios.nombre) {
                 query += " AND p.nombre LIKE ?";
@@ -161,7 +161,7 @@ export class ProductosModel {
     }
 
     // 📌 Obtener productos por productor
-    public async ObtenerProductosPorProductor(id_usuario: number): Promise<any[]> {
+    public async ObtenerProductosPorProductor(id_usuario: number): Promise<Record<string, unknown>[]> {
         try {
             const result = await conexion.query(`
                 SELECT 
@@ -260,6 +260,7 @@ export class ProductosModel {
                 if (this._objProducto.imagen_principal) {
                     const productDir = join(this.UPLOADS_DIR, id_producto.toString());
                     if (await this.existeDirectorio(productDir)) {
+                        // @ts-ignore - Deno is a global object in Deno runtime
                         await Deno.remove(productDir, { recursive: true });
                     }
                 }
@@ -275,11 +276,12 @@ export class ProductosModel {
                 [nombre, descripcion || null, precio, stock, stock_minimo || 5, id_usuario, id_categoria || null, id_ciudad_origen || null, unidad_medida || 'kg', rutaImagen, disponible !== false ? 1 : 0, id_producto]
             );
 
-            if (result && result.affectedRows && result.affectedRows > 0) {
+            // Si se actualizó la imagen o hay cambios en los datos, considerar exitoso
+            if (result && ((result.affectedRows ?? 0) > 0 || imagenData)) {
                 await conexion.execute("COMMIT");
                 return {
                     success: true,
-                    message: "Producto editado exitosamente.",
+                    message: imagenData ? "Imagen actualizada exitosamente." : "Producto editado exitosamente.",
                 };
             } else {
                 await conexion.execute("ROLLBACK");
@@ -356,6 +358,7 @@ export class ProductosModel {
 
     private async existeDirectorio(ruta: string): Promise<boolean> {
         try {
+            // @ts-ignore - Deno is a global object in Deno runtime
             const stat = await Deno.stat(ruta);
             return stat.isDirectory;
         } catch {
@@ -365,8 +368,10 @@ export class ProductosModel {
 
     private async crearDirectorio(ruta: string): Promise<void> {
         try {
+            // @ts-ignore - Deno is a global object in Deno runtime
             await Deno.mkdir(ruta, { recursive: true });
         } catch (error) {
+            // @ts-ignore - Deno is a global object in Deno runtime
             if (!(error instanceof Deno.errors.AlreadyExists)) {
                 throw error;
             }
@@ -396,19 +401,22 @@ export class ProductosModel {
             const productDir = join(this.UPLOADS_DIR, idProducto.toString());
             
             if (await this.existeDirectorio(productDir)) {
+                // @ts-ignore - Deno is a global object in Deno runtime
                 await Deno.remove(productDir, { recursive: true });
             }
 
             if (await this.existeDirectorio(this.UPLOADS_DIR)) {
                 try {
                     const items = [];
+                    // @ts-ignore - Deno is a global object in Deno runtime
                     for await (const dirEntry of Deno.readDir(this.UPLOADS_DIR)) {
                         items.push(dirEntry);
                     }
                     if (items.length === 0) {
+                        // @ts-ignore - Deno is a global object in Deno runtime
                         await Deno.remove(this.UPLOADS_DIR);
                     }
-                } catch (readError) {
+                } catch (_readError) {
                     console.log("Directorio uploads ya no existe o esta vacio");
                 }
             }
@@ -460,11 +468,13 @@ export class ProductosModel {
                 }
                                 
                 try {
+                    // @ts-ignore - Deno is a global object in Deno runtime
                     const stat = await Deno.stat(rutaArchivo);
                     if (!stat.isFile) {
                         throw new Error(`La ruta no es un archivo valido: ${rutaArchivo}`);
                     }
                     
+                    // @ts-ignore - Deno is a global object in Deno runtime
                     const fileData = await Deno.readFile(rutaArchivo);
                     return fileData;
                 } catch (error) {
@@ -485,7 +495,7 @@ export class ProductosModel {
             if (imagenData.match(/^[A-Za-z0-9+/]+=*$/)) {
                 try {
                     return Uint8Array.from(atob(imagenData), c => c.charCodeAt(0));
-                } catch (error) {
+                } catch (_error) {
                     throw new Error("El texto parece ser base64 pero no se puede decodificar correctamente");
                 }
             }
@@ -514,6 +524,7 @@ export class ProductosModel {
 
             const dataToWrite = await this.procesarImagen(imagenData);
                         
+            // @ts-ignore - Deno is a global object in Deno runtime
             await Deno.writeFile(rutaCompleta, dataToWrite);
             
             console.log(`Imagen guardada exitosamente`);

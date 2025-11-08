@@ -68,6 +68,8 @@ export const postUsuario = async (ctx: Context) => {
     const usuarioData = {
       id_usuario: null,
       ...validated,
+      activo: validated.activo ?? true, // Por defecto activo si no se especifica
+      email_verificado: validated.email_verificado ?? false, // Por defecto no verificado
     };
 
     const objUsuario = new Usuario(usuarioData);
@@ -94,7 +96,13 @@ export const putUsuario = async (ctx: Context) => {
     const body = await ctx.request.body.json();
     const validated = usuarioSchemaUpdate.parse(body);
 
-    const objUsuario = new Usuario(validated);
+    const usuarioData = {
+      ...validated,
+      activo: validated.activo ?? true, // Por defecto activo si no se especifica
+      email_verificado: validated.email_verificado ?? false, // Por defecto no verificado
+    };
+
+    const objUsuario = new Usuario(usuarioData);
     const result = await objUsuario.EditarUsuario();
 
     ctx.response.status = result.success ? 200 : 404;

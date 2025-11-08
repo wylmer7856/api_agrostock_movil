@@ -8,7 +8,6 @@ import type { Header, Payload } from "../Dependencies/dependencias.ts";
 import { Usuario } from "../Models/UsuariosModel.ts";
 import { securityService } from "../Services/SecurityService.ts";
 import { emailService } from "../Services/EmailService.ts";
-import { notificationService } from "../Services/NotificationService.ts";
 import { conexion } from "../Models/Conexion.ts";
 
 
@@ -18,7 +17,7 @@ let key: CryptoKey;
 
 async function initializeJWT() {
   const env = await load();
-  secret = (env as any).JWT_SECRET || "mi_clave_secreta_super_segura_2024";
+  secret = (env as Record<string, string>).JWT_SECRET || "mi_clave_secreta_super_segura_2024";
   
   key = await crypto.subtle.importKey(
     "raw",
@@ -64,7 +63,7 @@ export class AuthController {
       }
 
       const userInstance = new Usuario();
-      const usuario: any = await userInstance.buscarPorEmail(email);
+      const usuario = await userInstance.buscarPorEmail(email);
 
       if (!usuario) {
         ctx.response.status = 401;
@@ -240,7 +239,9 @@ export class AuthController {
         telefono: telefono,
         direccion: securityService.sanitizeInput(direccion),
         id_ciudad: id_ciudad,
-        rol: rol
+        rol: rol,
+        activo: true,
+        email_verificado: false
       });
 
       const result = await newUser.InsertarUsuario();
@@ -289,7 +290,7 @@ export class AuthController {
   /**
    * Logout
    */
-  static async logout(ctx: Context) {
+  static logout(ctx: Context) {
     try {
       // Logout simplificado - solo limpiar token del cliente
       ctx.response.status = 200;
@@ -311,7 +312,7 @@ export class AuthController {
   /**
    * Verificar token JWT
    */
-  static async verifyToken(ctx: Context) {
+  static verifyToken(ctx: Context) {
     try {
       const user = ctx.state.user;
       
@@ -381,7 +382,7 @@ export class AuthController {
 
       // Obtener usuario actual
       const userInstance = new Usuario();
-      const usuario: any = await userInstance.buscarPorEmail(user.email);
+      const usuario = await userInstance.buscarPorEmail(user.email);
 
       if (!usuario) {
         ctx.response.status = 404;

@@ -3,8 +3,7 @@
 import { conexion } from "../Models/Conexion.ts";
 import { securityService } from "./SecurityService.ts";
 import { emailService } from "./EmailService.ts";
-import { Usuario } from "../Models/UsuariosModel.ts";
-import { getNumericDate } from "../Dependencies/dependencias.ts";
+import { Usuario, type UsuarioLoginData } from "../Models/UsuariosModel.ts";
 
 export class PasswordRecoveryService {
   
@@ -160,7 +159,13 @@ export class PasswordRecoveryService {
       }
 
       // Verificar intentos
-      if (usuario.intentos_sms >= 5) {
+      const usuarioConSMS = usuario as UsuarioLoginData & {
+        intentos_sms?: number | null;
+        codigo_sms_expiracion?: string | Date | null;
+        codigo_verificacion_sms?: string | null;
+      };
+      const intentosSMS = usuarioConSMS.intentos_sms ?? 0;
+      if (intentosSMS >= 5) {
         return {
           success: true,
           valid: false,
@@ -170,10 +175,12 @@ export class PasswordRecoveryService {
 
       // Verificar código y expiración
       const ahora = new Date();
-      const fechaExpiracion = usuario.codigo_sms_expiracion ? new Date(usuario.codigo_sms_expiracion) : null;
+      const codigoSMSExpiracion = usuarioConSMS.codigo_sms_expiracion;
+      const fechaExpiracion = codigoSMSExpiracion ? new Date(codigoSMSExpiracion as string | Date) : null;
+      const codigoVerificacionSMS = usuarioConSMS.codigo_verificacion_sms;
 
-      if (!usuario.codigo_verificacion_sms || 
-          usuario.codigo_verificacion_sms !== codigo ||
+      if (!codigoVerificacionSMS || 
+          codigoVerificacionSMS !== codigo ||
           !fechaExpiracion || 
           fechaExpiracion < ahora) {
         
@@ -204,7 +211,7 @@ export class PasswordRecoveryService {
         success: true,
         valid: true,
         message: "Código válido.",
-        id_usuario: usuario.id_usuario
+        id_usuario: usuario.id_usuario ?? undefined
       };
     } catch (error) {
       console.error("Error validando código SMS:", error);
@@ -345,7 +352,7 @@ export class PasswordRecoveryService {
     accion: string,
     tabla: string,
     id_registro: number,
-    datos_extra?: any
+    datos_extra?: Record<string, unknown>
   ): Promise<void> {
     try {
       await conexion.execute(
