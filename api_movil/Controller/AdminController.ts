@@ -3,6 +3,7 @@ import { Usuario } from "../Models/UsuariosModel.ts";
 import { ProductosModel } from "../Models/ProductosModel.ts";
 import { ReportesModel } from "../Models/ReportesModel.ts";
 import { EstadisticasModel } from "../Models/EstadisticasModel.ts";
+import { conexion } from "../Models/Conexion.ts";
 
 export class AdminController {
   
@@ -31,39 +32,54 @@ export class AdminController {
 
       // Obtener información adicional de cada usuario
       const { conexion } = await import("../Models/Conexion.ts");
-      const usuariosConInfo = await Promise.all(usuarios.map(async (usuario) => {
-        const ciudad = await conexion.query(`
-          SELECT c.nombre as ciudad, d.nombre as departamento, r.nombre as region
-          FROM ciudades c
-          INNER JOIN departamentos d ON c.id_departamento = d.id_departamento
-          INNER JOIN regiones r ON d.id_region = r.id_region
-          WHERE c.id_ciudad = ?
-        `, [usuario.id_ciudad]);
+      const usuariosConInfo = await Promise.all(usuarios.map(async (usuario: any) => {
+        try {
+          const ciudad = await conexion.query(`
+            SELECT c.nombre as ciudad, d.nombre as departamento, r.nombre as region
+            FROM ciudades c
+            INNER JOIN departamentos d ON c.id_departamento = d.id_departamento
+            INNER JOIN regiones r ON d.id_region = r.id_region
+            WHERE c.id_ciudad = ?
+          `, [usuario.id_ciudad || usuario.id_ciudad]);
 
-        const estadisticas = await conexion.query(`
-          SELECT 
-            COUNT(p.id_producto) as total_productos,
-            COUNT(m.id_mensaje) as total_mensajes_recibidos,
-            COUNT(ped.id_pedido) as total_pedidos_recibidos
-          FROM usuarios u
-          LEFT JOIN productos p ON u.id_usuario = p.id_usuario
-          LEFT JOIN mensajes m ON u.id_usuario = m.id_destinatario
-          LEFT JOIN pedidos ped ON u.id_usuario = ped.id_productor
-          WHERE u.id_usuario = ?
-        `, [usuario.id_usuario]);
+          const estadisticas = await conexion.query(`
+            SELECT 
+              COUNT(DISTINCT p.id_producto) as total_productos,
+              COUNT(DISTINCT m.id_mensaje) as total_mensajes_recibidos,
+              COUNT(DISTINCT ped.id_pedido) as total_pedidos_recibidos
+            FROM usuarios u
+            LEFT JOIN productos p ON u.id_usuario = p.id_usuario
+            LEFT JOIN mensajes m ON u.id_usuario = m.id_destinatario
+            LEFT JOIN pedidos ped ON u.id_usuario = ped.id_productor
+            WHERE u.id_usuario = ?
+          `, [usuario.id_usuario]);
 
-        return {
-          ...usuario,
-          ubicacion: ciudad[0] || null,
-          estadisticas: estadisticas[0] || { total_productos: 0, total_mensajes_recibidos: 0, total_pedidos_recibidos: 0 }
-        };
+          return {
+            ...usuario,
+            ubicacion: ciudad[0] ? {
+              ciudad: ciudad[0].ciudad,
+              departamento: ciudad[0].departamento,
+              region: ciudad[0].region
+            } : null,
+            estadisticas: estadisticas[0] || { total_productos: 0, total_mensajes_recibidos: 0, total_pedidos_recibidos: 0 }
+          };
+        } catch (err) {
+          console.error(`Error procesando usuario ${usuario.id_usuario}:`, err);
+          return {
+            ...usuario,
+            ubicacion: null,
+            estadisticas: { total_productos: 0, total_mensajes_recibidos: 0, total_pedidos_recibidos: 0 }
+          };
+        }
       }));
 
       ctx.response.status = 200;
       ctx.response.body = {
         success: true,
-        usuarios: usuariosConInfo,
-        total: usuariosConInfo.length
+        data: usuariosConInfo, // ✅ Formato estándar con data
+        usuarios: usuariosConInfo, // ✅ Mantener también para compatibilidad
+        total: usuariosConInfo.length,
+        message: `${usuariosConInfo.length} usuarios encontrados`
       };
     } catch (error) {
       console.error("Error en ObtenerTodosLosUsuarios:", error);
@@ -80,22 +96,34 @@ export class AdminController {
 
       if (!nombre || !email || !password || !telefono || !direccion || !id_ciudad || !rol) {
         ctx.response.status = 400;
-        ctx.response.body = { error: "Faltan campos requeridos" };
+        ctx.response.body = { 
+          success: false,
+          error: "MISSING_FIELDS",
+          message: "Faltan campos requeridos" 
+        };
         return;
       }
 
       const rolesValidos = ['admin', 'consumidor', 'productor'];
       if (!rolesValidos.includes(rol)) {
         ctx.response.status = 400;
-        ctx.response.body = { error: "Rol inválido" };
+        ctx.response.body = { 
+          success: false,
+          error: "INVALID_ROLE",
+          message: "Rol inválido. Roles válidos: admin, consumidor, productor"
+        };
         return;
       }
+
+      // ✅ Hashear la contraseña antes de guardar
+      const { securityService } = await import("../Services/SecurityService.ts");
+      const hashedPassword = await securityService.hashPassword(password);
 
       const usuarioData = {
         id_usuario: null,
         nombre,
-        email,
-        password,
+        email: email.toLowerCase().trim(),
+        password: hashedPassword, // ✅ Usar contraseña hasheada
         telefono,
         direccion,
         id_ciudad: parseInt(id_ciudad),
@@ -220,8 +248,10 @@ export class AdminController {
       ctx.response.status = 200;
       ctx.response.body = {
         success: true,
-        productos,
-        total: productos.length
+        data: productos, // ✅ Formato estándar con data
+        productos, // ✅ Mantener también para compatibilidad
+        total: productos.length,
+        message: `${productos.length} productos encontrados`
       };
     } catch (error) {
       console.error("Error en ObtenerTodosLosProductos:", error);
@@ -279,18 +309,45 @@ export class AdminController {
   static async ObtenerTodosLosReportes(ctx: Context) {
     try {
       const reportesModel = new ReportesModel();
-      const reportes = await reportesModel.ObtenerTodosLosReportes();
+      const reportesRaw = await reportesModel.ObtenerTodosLosReportes();
+
+      // ✅ Transformar al formato esperado por el frontend
+      const reportes = reportesRaw.map((reporte: any) => ({
+        id_reporte: reporte.id_reporte,
+        id_usuario_reportante: reporte.id_usuario_reportador,
+        tipo_reporte: reporte.tipo_reporte === 'producto' ? 'producto_inapropiado' : 
+                     reporte.tipo_reporte === 'usuario' ? 'usuario_inapropiado' : 
+                     reporte.tipo_reporte,
+        id_elemento_reportado: reporte.id_producto_reportado || reporte.id_usuario_reportado || 0,
+        motivo: reporte.motivo || '',
+        descripcion: reporte.descripcion || '',
+        estado: reporte.estado || 'pendiente',
+        fecha_reporte: reporte.fecha_reporte ? new Date(reporte.fecha_reporte).toISOString() : new Date().toISOString(),
+        fecha_resolucion: reporte.fecha_resolucion ? new Date(reporte.fecha_resolucion).toISOString() : undefined,
+        accion_tomada: reporte.accion_tomada || undefined,
+        // Campos adicionales para el frontend
+        nombre_reportador: reporte.nombre_reportador || 'Usuario desconocido',
+        email_reportador: reporte.email_reportador || '',
+        elemento_reportado: reporte.nombre_producto_reportado || reporte.nombre_usuario_reportado || 'N/A',
+        tipo_elemento: reporte.tipo_reporte === 'producto' ? 'Producto' : 'Usuario'
+      }));
 
       ctx.response.status = 200;
       ctx.response.body = {
         success: true,
-        reportes,
-        total: reportes.length
+        data: reportes, // ✅ Formato estándar con data
+        reportes, // ✅ Mantener también para compatibilidad
+        total: reportes.length,
+        message: `${reportes.length} reportes encontrados`
       };
     } catch (error) {
       console.error("Error en ObtenerTodosLosReportes:", error);
       ctx.response.status = 500;
-      ctx.response.body = { error: "Error interno del servidor" };
+      ctx.response.body = { 
+        success: false,
+        error: "INTERNAL_ERROR",
+        message: "Error interno del servidor" 
+      };
     }
   }
 
@@ -363,17 +420,54 @@ export class AdminController {
   static async ObtenerEstadisticasGenerales(ctx: Context) {
     try {
       const estadisticasModel = new EstadisticasModel();
-      const estadisticas = await estadisticasModel.ObtenerEstadisticasGenerales();
+      const statsRaw = await estadisticasModel.ObtenerEstadisticasGenerales();
+
+      // Contar admins
+      const adminCount = await conexion.query("SELECT COUNT(*) as total FROM usuarios WHERE rol = 'admin'");
+      
+      // ✅ Transformar al formato esperado por el frontend
+      const estadisticas = {
+        total_usuarios: statsRaw.total_usuarios || 0,
+        total_productos: statsRaw.total_productos || 0,
+        total_pedidos: statsRaw.total_pedidos || 0,
+        ingresos_totales: 0, // TODO: Calcular desde pedidos cuando tengas esa tabla
+        usuarios_nuevos: statsRaw.actividad_reciente?.usuarios_nuevos_ultimo_mes || 0,
+        productos_nuevos: statsRaw.actividad_reciente?.productos_nuevos_ultimo_mes || 0,
+        pedidos_completados: 0, // TODO: Calcular desde pedidos cuando tengas estados
+        pedidos_pendientes: 0, // TODO: Calcular desde pedidos
+        pedidos_cancelados: 0, // TODO: Calcular desde pedidos
+        ingresos_periodo: 0, // TODO: Calcular
+        usuarios_por_rol: {
+          admin: adminCount[0]?.total || 0,
+          productor: statsRaw.total_productores || 0,
+          consumidor: statsRaw.total_consumidores || 0
+        },
+        productos_por_categoria: statsRaw.productos_por_categoria?.map((c: any) => ({
+          nombre: c.categoria,
+          cantidad: c.cantidad,
+          total: c.cantidad
+        })) || [],
+        tasa_conversion: 0, // TODO: Calcular
+        ticket_promedio: 0, // TODO: Calcular
+        productos_por_usuario: statsRaw.total_usuarios > 0 ? statsRaw.total_productos / statsRaw.total_usuarios : 0,
+        pedidos_por_usuario: statsRaw.total_usuarios > 0 ? statsRaw.total_pedidos / statsRaw.total_usuarios : 0
+      };
 
       ctx.response.status = 200;
       ctx.response.body = {
         success: true,
-        estadisticas
+        data: estadisticas, // ✅ Formato estándar con data
+        estadisticas, // ✅ Mantener también para compatibilidad
+        message: "Estadísticas obtenidas exitosamente"
       };
     } catch (error) {
       console.error("Error en ObtenerEstadisticasGenerales:", error);
       ctx.response.status = 500;
-      ctx.response.body = { error: "Error interno del servidor" };
+      ctx.response.body = { 
+        success: false,
+        error: "INTERNAL_ERROR",
+        message: "Error interno del servidor" 
+      };
     }
   }
 
@@ -381,17 +475,70 @@ export class AdminController {
   static async ObtenerActividadReciente(ctx: Context) {
     try {
       const estadisticasModel = new EstadisticasModel();
-      const actividad = await estadisticasModel.ObtenerActividadReciente();
+      const actividadRaw = await estadisticasModel.ObtenerActividadReciente();
+
+      // ✅ Transformar al formato esperado por el frontend (array de actividades)
+      const actividad: Array<{
+        id: number;
+        tipo: string;
+        descripcion: string;
+        timestamp: string;
+        usuario?: string;
+      }> = [];
+
+      let idCounter = 1;
+      
+      // Usuarios nuevos
+      actividadRaw.usuarios_nuevos?.forEach((item: any) => {
+        actividad.push({
+          id: idCounter++,
+          tipo: 'usuario_registrado',
+          descripcion: `${item.cantidad} usuario(s) registrado(s)`,
+          timestamp: item.fecha,
+          usuario: 'Sistema'
+        });
+      });
+
+      // Productos nuevos
+      actividadRaw.productos_nuevos?.forEach((item: any) => {
+        actividad.push({
+          id: idCounter++,
+          tipo: 'producto_creado',
+          descripcion: `${item.cantidad} producto(s) creado(s)`,
+          timestamp: item.fecha,
+          usuario: 'Sistema'
+        });
+      });
+
+      // Pedidos nuevos
+      actividadRaw.pedidos_nuevos?.forEach((item: any) => {
+        actividad.push({
+          id: idCounter++,
+          tipo: 'pedido_realizado',
+          descripcion: `${item.cantidad} pedido(s) realizado(s)`,
+          timestamp: item.fecha,
+          usuario: 'Sistema'
+        });
+      });
+
+      // Ordenar por fecha más reciente
+      actividad.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
       ctx.response.status = 200;
       ctx.response.body = {
         success: true,
-        actividad
+        data: actividad, // ✅ Formato estándar con data (array)
+        actividad, // ✅ Mantener también para compatibilidad
+        message: `${actividad.length} actividades encontradas`
       };
     } catch (error) {
       console.error("Error en ObtenerActividadReciente:", error);
       ctx.response.status = 500;
-      ctx.response.body = { error: "Error interno del servidor" };
+      ctx.response.body = { 
+        success: false,
+        error: "INTERNAL_ERROR",
+        message: "Error interno del servidor" 
+      };
     }
   }
 

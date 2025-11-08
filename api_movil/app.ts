@@ -15,26 +15,25 @@ import { EstadisticasRouter } from "./Routers/EstadisticasRouter.ts";
 import { AdminRouter } from "./Routers/AdminRouter.ts";
 import { CartRouter } from "./Routers/CartRouter.ts";
 import { ReseñasRouter } from "./Routers/ReseñasRouter.ts";
+import { PasswordRecoveryRouter } from "./Routers/PasswordRecoveryRouter.ts";
+import { AuditoriaRouter } from "./Routers/AuditoriaRouter.ts";
+import { PaymentRouter } from "./Routers/PaymentRouter.ts";
+import { ProductoresRouter } from "./Routers/ProductoresRouter.ts";
+import { ImageRouter } from "./Routers/ImageRouter.ts";
 
-// Importar middlewares avanzados - Temporalmente deshabilitados para debug
-// import { 
-//   requestLoggingMiddleware, 
-//   securityHeadersMiddleware, 
-//   compressionMiddleware,
-//   rateLimitMiddleware
-//   // metricsMiddleware - temporalmente deshabilitado
-// } from "./Middlewares/AdvancedMiddlewares.ts";
+// Importar middlewares avanzados
+import { 
+  requestLoggingMiddleware, 
+  securityHeadersMiddleware, 
+  compressionMiddleware,
+  rateLimitMiddleware
+  // metricsMiddleware - puede habilitarse cuando se necesite
+} from "./Middlewares/AdvancedMiddlewares.ts";
+import { staticFilesMiddleware } from "./Middlewares/StaticFilesMiddleware.ts";
 
 const app = new Application();
 
-// 📌 Middlewares globales (orden importante) - Temporalmente deshabilitados para debug
-// app.use(requestLoggingMiddleware());
-// app.use(securityHeadersMiddleware());
-// app.use(compressionMiddleware());
-// app.use(rateLimitMiddleware(15 * 60 * 1000, 100)); // 100 requests per 15 minutes
-// app.use(metricsMiddleware()); // Temporalmente deshabilitado para debug
-
-// Middleware CORS personalizado
+// 📌 Middleware CORS - DEBE IR PRIMERO (antes de cualquier otro middleware)
 app.use(async (ctx, next) => {
   const origin = ctx.request.headers.get("origin");
   
@@ -43,11 +42,16 @@ app.use(async (ctx, next) => {
     "http://localhost:3000",
     "http://localhost:8080", 
     "http://localhost:5173",
+    "http://127.0.0.1:5173",
     "https://agrostock.com"
   ];
   
-  if (!origin || allowedOrigins.includes(origin)) {
-    ctx.response.headers.set("Access-Control-Allow-Origin", origin || "*");
+  // Permitir el origen si está en la lista o si no hay origen (solicitudes del mismo origen)
+  if (origin && allowedOrigins.includes(origin)) {
+    ctx.response.headers.set("Access-Control-Allow-Origin", origin);
+  } else if (!origin) {
+    // Si no hay origin, permitir (solicitud del mismo origen)
+    ctx.response.headers.set("Access-Control-Allow-Origin", "*");
   }
   
   ctx.response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
@@ -55,32 +59,49 @@ app.use(async (ctx, next) => {
   ctx.response.headers.set("Access-Control-Allow-Credentials", "true");
   ctx.response.headers.set("Access-Control-Max-Age", "86400");
   
+  // Manejar solicitudes preflight OPTIONS
   if (ctx.request.method === "OPTIONS") {
     ctx.response.status = 200;
+    ctx.response.body = "";
     return;
   }
   
   await next();
 });
 
+// 📌 Middlewares globales (orden importante)
+// Habilitados para producción con configuración moderada
+app.use(requestLoggingMiddleware());
+app.use(securityHeadersMiddleware());
+app.use(compressionMiddleware());
+app.use(rateLimitMiddleware(15 * 60 * 1000, 100)); // 100 requests per 15 minutes
+
+// Middleware para servir archivos estáticos (uploads)
+app.use(staticFilesMiddleware);
+
 // 📌 Routers principales (orden de prioridad)
 const routers = [
-  AuthRouter,           // Autenticación (prioridad alta)
-  CartRouter,           // Carrito de compras (nuevo)
-  ProductosRouter,      // Productos (público y privado)
-  CategoriasRouter,     // Categorías
-  ReseñasRouter,        // Sistema de reseñas
-  MensajesRouter,       // Sistema de mensajes
-  ReportesRouter,       // Sistema de reportes
-  EstadisticasRouter,   // Estadísticas
-  AdminRouter,          // Panel de administración
-  UsuariosRouter,       // Gestión de usuarios
-  RegionesRouter,       // Regiones
-  DepartamentosRouter,  // Departamentos
-  CiudadesRouter,       // Ciudades
-  AlertasRouter,        // Alertas de stock
-  DetallePedidosRouter, // Detalle de pedidos
-  pedidosRouter         // Pedidos
+  AuthRouter,                // Autenticación (prioridad alta)
+  PasswordRecoveryRouter,    // Recuperación de contraseña (público)
+  CartRouter,                // Carrito de compras
+  ProductosRouter,           // Productos (público y privado)
+  CategoriasRouter,          // Categorías
+  ProductoresRouter,          // Perfiles de productores
+  ImageRouter,                // Gestión de imágenes
+  ReseñasRouter,            // Sistema de reseñas
+  MensajesRouter,            // Sistema de mensajes
+  PaymentRouter,             // Sistema de pagos
+  ReportesRouter,            // Sistema de reportes
+  EstadisticasRouter,        // Estadísticas
+  AuditoriaRouter,           // Auditoría y trazabilidad
+  AdminRouter,               // Panel de administración
+  UsuariosRouter,            // Gestión de usuarios
+  RegionesRouter,            // Regiones
+  DepartamentosRouter,       // Departamentos
+  CiudadesRouter,            // Ciudades
+  AlertasRouter,             // Alertas de stock
+  DetallePedidosRouter,      // Detalle de pedidos
+  pedidosRouter              // Pedidos
 ];
 
 // Registrar todos los routers
@@ -90,17 +111,32 @@ routers.forEach((router) => {
 });
 
 // 📌 Middleware de manejo de errores global mejorado
+// IMPORTANTE: Este middleware debe ir DESPUÉS de todos los routers
 app.use(async (ctx, next) => {
   try {
     await next();
+    
+    // Si no hay respuesta, es una ruta no encontrada
+    if (!ctx.response.body && ctx.response.status === 404) {
+      return; // Ya será manejado por el middleware de 404
+    }
   } catch (err) {
     console.error("🚨 Error en el servidor:", err);
     
     // Log del error con más detalles
+    let ip = 'unknown';
+    try {
+      ip = ctx.request.ip || 'unknown';
+    } catch {
+      ip = ctx.request.headers.get('x-forwarded-for') || 
+           ctx.request.headers.get('x-real-ip') || 
+           'unknown';
+    }
+    
     console.error("📊 Detalles del error:", {
       method: ctx.request.method,
       url: ctx.request.url.pathname,
-      ip: ctx.request.ip,
+      ip: ip,
       userAgent: ctx.request.headers.get('user-agent'),
       timestamp: new Date().toISOString(),
       error: err instanceof Error ? err.message : String(err),
@@ -113,87 +149,109 @@ app.use(async (ctx, next) => {
     let errorCode = "INTERNAL_ERROR";
 
     if (err instanceof Error) {
-      if (err.name === "ValidationError") {
+      const errorMessage = err.message.toLowerCase();
+      
+      // Errores de base de datos
+      if (errorMessage.includes('connection') || errorMessage.includes('database') || errorMessage.includes('mysql')) {
+        status = 503;
+        message = "Error de conexión con la base de datos";
+        errorCode = "DATABASE_ERROR";
+      }
+      // Errores de validación
+      else if (err.name === "ValidationError" || err.name === "ZodError" || errorMessage.includes('validation')) {
         status = 400;
         message = "Datos de entrada inválidos";
         errorCode = "VALIDATION_ERROR";
-      } else if (err.name === "UnauthorizedError") {
+      }
+      // Errores de autenticación
+      else if (err.name === "UnauthorizedError" || errorMessage.includes('unauthorized') || errorMessage.includes('token')) {
         status = 401;
         message = "No autorizado";
         errorCode = "UNAUTHORIZED";
-      } else if (err.name === "ForbiddenError") {
+      }
+      // Errores de permisos
+      else if (err.name === "ForbiddenError" || errorMessage.includes('forbidden') || errorMessage.includes('permission')) {
         status = 403;
         message = "Acceso denegado";
         errorCode = "FORBIDDEN";
-      } else if (err.name === "NotFoundError") {
+      }
+      // Errores de recurso no encontrado
+      else if (err.name === "NotFoundError" || errorMessage.includes('not found') || errorMessage.includes('no encontrado')) {
         status = 404;
         message = "Recurso no encontrado";
         errorCode = "NOT_FOUND";
       }
     }
 
-    ctx.response.status = status;
-    ctx.response.body = { 
-      success: false,
-      error: errorCode,
-      message: message,
-      timestamp: new Date().toISOString(),
-      request_id: crypto.randomUUID()
-    };
+    // Solo establecer respuesta si no se ha establecido ya
+    if (!ctx.response.body) {
+      ctx.response.status = status;
+      ctx.response.body = { 
+        success: false,
+        error: errorCode,
+        message: message,
+        timestamp: new Date().toISOString(),
+        request_id: crypto.randomUUID()
+      };
+    }
   }
 });
 
-// 📌 Middleware para rutas no encontradas mejorado
-app.use(async (ctx) => {
-  ctx.response.status = 404;
-  ctx.response.body = {
-    success: false,
-    error: "RUTA_NO_ENCONTRADA",
-    message: "La ruta solicitada no existe en el servidor.",
-    timestamp: new Date().toISOString(),
-    available_routes: {
-      auth: {
-        login: "POST /auth/login",
-        register: "POST /auth/register",
-        logout: "POST /auth/logout",
-        verify: "GET /auth/verify",
-        change_password: "POST /auth/change-password"
-      },
-      cart: {
-        get: "GET /cart",
-        add: "POST /cart/add",
-        update: "PUT /cart/item/:id",
-        remove: "DELETE /cart/item/:id",
-        clear: "DELETE /cart/clear",
-        validate: "GET /cart/validate",
-        checkout: "POST /cart/checkout",
-        stats: "GET /cart/stats"
-      },
-      productos: {
-        list: "GET /productos",
-        get: "GET /productos/:id",
-        create: "POST /productos",
-        update: "PUT /productos/:id",
-        delete: "DELETE /productos/:id",
-        search: "GET /productos/search",
-        by_user: "GET /productos/usuario/:id"
-      },
-      categorias: "GET /categorias",
-      resenas: "GET|POST|PUT|DELETE /Resena",
-      mensajes: "GET|POST /mensajes",
-      reportes: "GET|POST /reportes",
-      estadisticas: "GET /estadisticas",
-      admin: "GET|POST|PUT|DELETE /admin/*",
-      usuarios: "GET|POST|PUT|DELETE /usuarios",
-      ubicaciones: {
-        regiones: "GET /regiones",
-        departamentos: "GET /departamentos",
-        ciudades: "GET /ciudades"
+// 📌 Middleware para rutas no encontradas (debe ir al final)
+app.use((ctx) => {
+  // Solo responder 404 si no se ha establecido una respuesta
+  if (!ctx.response.body) {
+    ctx.response.status = 404;
+    ctx.response.body = {
+      success: false,
+      error: "RUTA_NO_ENCONTRADA",
+      message: "La ruta solicitada no existe en el servidor.",
+      timestamp: new Date().toISOString(),
+      path: ctx.request.url.pathname,
+      method: ctx.request.method,
+      available_routes: {
+        auth: {
+          login: "POST /auth/login",
+          register: "POST /auth/register",
+          logout: "POST /auth/logout",
+          verify: "GET /auth/verify",
+          change_password: "POST /auth/change-password"
+        },
+        cart: {
+          get: "GET /cart",
+          add: "POST /cart/add",
+          update: "PUT /cart/item/:id",
+          remove: "DELETE /cart/item/:id",
+          clear: "DELETE /cart/clear",
+          validate: "GET /cart/validate",
+          checkout: "POST /cart/checkout",
+          stats: "GET /cart/stats"
+        },
+        productos: {
+          list: "GET /productos",
+          get: "GET /productos/:id",
+          create: "POST /productos",
+          update: "PUT /productos/:id",
+          delete: "DELETE /productos/:id",
+          search: "GET /productos/buscar",
+          by_user: "GET /productos/usuario/:id"
+        },
+        categorias: "GET /categorias",
+        resenas: "GET|POST|PUT|DELETE /resenas",
+        mensajes: "GET|POST /mensajes",
+        reportes: "GET|POST /reportes",
+        estadisticas: "GET /estadisticas",
+        admin: "GET|POST|PUT|DELETE /admin/*",
+        usuarios: "GET|POST|PUT|DELETE /Usuario",
+        pedidos: "GET|POST|PUT|DELETE /pedidos",
+        ubicaciones: {
+          regiones: "GET /regiones",
+          departamentos: "GET /departamentos",
+          ciudades: "GET /ciudades"
+        }
       }
-    },
-    documentation: "https://docs.agrostock.com/api",
-    support: "support@agrostock.com"
-  };
+    };
+  }
 });
 
 // 📌 Información del servidor al iniciar
@@ -211,7 +269,7 @@ console.log("  🔐 Autenticación: /auth/*");
 console.log("  🛒 Carrito: /cart/*");
 console.log("  🛍️  Productos: /productos/*");
 console.log("  📂 Categorías: /categorias");
-console.log("  ⭐ Reseñas: /Resena/*");
+console.log("  ⭐ Reseñas: /resenas/*");
 console.log("  💬 Mensajes: /mensajes");
 console.log("  📊 Reportes: /reportes");
 console.log("  📈 Estadísticas: /estadisticas");
@@ -219,26 +277,62 @@ console.log("  👨‍💼 Administración: /admin");
 console.log("  👥 Usuarios: /usuarios");
 console.log("  🌍 Ubicaciones: /regiones, /departamentos, /ciudades");
 
-// 📌 Función para encontrar puerto disponible
-async function findAvailablePort(startPort: number): Promise<number> {
-  for (let port = startPort; port < startPort + 100; port++) {
-    try {
-      const listener = Deno.listen({ port: port, hostname: "127.0.0.1" });
-      listener.close();
-      return port;
-    } catch {
-      continue;
+// 📌 Iniciar servidor - Solo puerto 8000
+const PORT = 8000;
+const HOST = "0.0.0.0"; // Escuchar en todas las interfaces para permitir conexiones desde localhost
+
+// Función para iniciar el servidor con manejo de errores
+async function iniciarServidor() {
+  try {
+    console.log(`🌐 Servidor corriendo en http://localhost:${PORT} y http://127.0.0.1:${PORT}`);
+    console.log("✅ AgroStock API lista para recibir conexiones");
+    
+    await app.listen({ port: PORT, hostname: HOST });
+  } catch (error) {
+    console.error("\n❌ Error al iniciar el servidor:", error);
+    
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    if (errorMessage.includes("AddrInUse") || errorMessage.includes("10048")) {
+      console.error(`\n💡 El puerto ${PORT} está en uso.`);
+      console.error(`   Cierra la otra instancia del servidor que está usando el puerto ${PORT}.`);
+      console.error(`\n   En Windows PowerShell puedes usar:`);
+      console.error(`   Get-Process -Id (Get-NetTCPConnection -LocalPort ${PORT}).OwningProcess | Stop-Process`);
+      console.error(`\n   O simplemente cierra la otra ventana de terminal donde está corriendo el servidor.`);
+    } else {
+      console.error(`\n   Error: ${errorMessage}`);
     }
+    
+    Deno.exit(1);
   }
-  throw new Error("No se encontró puerto disponible");
 }
 
-// 📌 Iniciar servidor
-const startPort = Deno.env.get("PORT") ? parseInt(Deno.env.get("PORT")!) : 5000;
-const PORT = await findAvailablePort(startPort);
-const HOST = "127.0.0.1";
+// Manejar errores no capturados
+globalThis.addEventListener("error", (event) => {
+  const error = event.error || event.message;
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  
+  if (errorMessage.includes("AddrInUse") || errorMessage.includes("10048")) {
+    console.error("\n❌ Error: El puerto 8000 está en uso.");
+    console.error(`\n💡 Cierra la otra instancia del servidor.`);
+    console.error(`   En Windows PowerShell:`);
+    console.error(`   Get-Process -Id (Get-NetTCPConnection -LocalPort 8000).OwningProcess | Stop-Process`);
+    Deno.exit(1);
+  }
+});
 
-console.log(`🌐 Servidor corriendo en http://${HOST}:${PORT}`);
-console.log("✅ AgroStock API lista para recibir conexiones");
+globalThis.addEventListener("unhandledrejection", (event) => {
+  const error = event.reason;
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  
+  if (errorMessage.includes("AddrInUse") || errorMessage.includes("10048")) {
+    console.error("\n❌ Error: El puerto 8000 está en uso.");
+    console.error(`\n💡 Cierra la otra instancia del servidor.`);
+    console.error(`   En Windows PowerShell:`);
+    console.error(`   Get-Process -Id (Get-NetTCPConnection -LocalPort 8000).OwningProcess | Stop-Process`);
+    Deno.exit(1);
+  }
+});
 
-await app.listen({ port: PORT, hostname: HOST });
+// Iniciar el servidor
+await iniciarServidor();

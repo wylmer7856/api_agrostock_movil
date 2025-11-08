@@ -4,6 +4,7 @@ import { AuthMiddleware } from "../Middlewares/AuthMiddleware.ts";
 
 const CiudadesRouter = new Router();
 
-CiudadesRouter.get("/ciudades", AuthMiddleware(["admin", "productor"]), getCiudades);
+// Ruta pública para ciudades (necesaria para registro)
+CiudadesRouter.get("/ciudades", getCiudades);
 
 export { CiudadesRouter };

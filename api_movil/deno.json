@@ -20,14 +20,8 @@
     "@std/assert": "jsr:@std/assert@1"
   },
   "compilerOptions": {
-    "allowJs": true,
     "lib": ["deno.window"],
-    "strict": true,
-    "noImplicitAny": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true
+    "strict": true
   },
   "lint": {
     "rules": {

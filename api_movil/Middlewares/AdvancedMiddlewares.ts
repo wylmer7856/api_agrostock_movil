@@ -69,7 +69,18 @@ setInterval(() => rateLimiter.cleanup(), 5 * 60 * 1000);
  */
 export function rateLimitMiddleware(windowMs: number = 15 * 60 * 1000, maxRequests: number = 100) {
   return async (ctx: Context, next: () => Promise<unknown>) => {
-    const identifier = ctx.request.ip || 'unknown';
+    // Obtener IP de forma segura para rate limiting
+    let identifier = 'unknown';
+    try {
+      identifier = ctx.request.ip || 'unknown';
+    } catch (error) {
+      // Si falla, usar headers o URL como identificador
+      identifier = ctx.request.headers.get('x-forwarded-for') || 
+                   ctx.request.headers.get('x-real-ip') || 
+                   ctx.request.url.href || 
+                   'unknown';
+    }
+    
     const result = rateLimiter.isAllowed(identifier);
 
     ctx.response.headers.set('X-RateLimit-Limit', maxRequests.toString());
@@ -134,7 +145,18 @@ export function requestLoggingMiddleware() {
     const start = Date.now();
     const method = ctx.request.method;
     const url = ctx.request.url.pathname;
-    const ip = ctx.request.ip || 'unknown';
+    
+    // Obtener IP de forma segura (puede fallar en algunas configuraciones de Deno)
+    let ip = 'unknown';
+    try {
+      ip = ctx.request.ip || 'unknown';
+    } catch (error) {
+      // Si falla, intentar obtener de headers
+      ip = ctx.request.headers.get('x-forwarded-for') || 
+           ctx.request.headers.get('x-real-ip') || 
+           'unknown';
+    }
+    
     const userAgent = ctx.request.headers.get('user-agent') || 'unknown';
 
     console.log(`📥 ${method} ${url} - IP: ${ip} - User-Agent: ${userAgent}`);
@@ -172,16 +194,13 @@ export function securityHeadersMiddleware() {
 }
 
 /**
- * Middleware de compresión (simulado)
+ * Middleware de compresión (deshabilitado)
+ * Nota: La compresión real requiere una librería como deno-gzip o usar un proxy reverso como nginx
  */
 export function compressionMiddleware() {
   return async (ctx: Context, next: () => Promise<unknown>) => {
-    const acceptEncoding = ctx.request.headers.get('accept-encoding') || '';
-    
-    if (acceptEncoding.includes('gzip')) {
-      ctx.response.headers.set('Content-Encoding', 'gzip');
-    }
-
+    // No establecer Content-Encoding sin comprimir realmente el contenido
+    // Esto evita el error "incorrect header check"
     await next();
   };
 }

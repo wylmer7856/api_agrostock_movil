@@ -355,7 +355,7 @@ export class CartController {
         );
 
         const productos = await conexion.query(
-          `SELECT dp.*, pr.nombre, pr.unidadMedida
+          `SELECT dp.*, pr.nombre, pr.unidad_medida
            FROM detalle_pedidos dp
            INNER JOIN productos pr ON dp.id_producto = pr.id_producto
            WHERE dp.id_pedido = ?`,

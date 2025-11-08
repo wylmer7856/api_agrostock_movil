@@ -33,7 +33,18 @@ export class CartService {
   async getUserCart(id_usuario: number): Promise<CartData | null> {
     try {
       const result = await conexion.query(
-        `SELECT * FROM carrito_compras WHERE id_usuario = ?`,
+        `SELECT 
+           c.*,
+           p.nombre as producto_nombre,
+           p.precio as precio_actual,
+           p.stock as stock_actual,
+           p.disponible as producto_disponible,
+           p.imagen_principal,
+           CASE WHEN p.stock >= c.cantidad AND p.disponible = 1 THEN 1 ELSE 0 END as disponible
+         FROM carrito c
+         INNER JOIN productos p ON c.id_producto = p.id_producto
+         WHERE c.id_usuario = ?
+         ORDER BY c.fecha_agregado DESC`,
         [id_usuario]
       );
 
@@ -41,15 +52,23 @@ export class CartService {
         return null;
       }
 
-      const cartData = result[0];
-      const items = await this.getCartItems(cartData.id_carrito);
+      const items: CartItem[] = result.map((item: any) => ({
+        id_producto: item.id_producto,
+        cantidad: item.cantidad,
+        precio_unitario: item.precio_actual,
+        precio_total: item.cantidad * item.precio_actual,
+        disponible: Boolean(item.disponible),
+        stock_actual: item.stock_actual
+      }));
+
+      const fechaActualizacion = result.length > 0 ? new Date(result[0].fecha_agregado) : new Date();
       
       return {
-        id_usuario: cartData.id_usuario,
+        id_usuario: id_usuario,
         items: items,
         total_items: items.reduce((sum, item) => sum + item.cantidad, 0),
         total_precio: items.reduce((sum, item) => sum + item.precio_total, 0),
-        fecha_actualizacion: cartData.fecha_actualizacion
+        fecha_actualizacion: fechaActualizacion
       };
     } catch (error) {
       console.error("Error al obtener carrito:", error);
@@ -57,73 +76,7 @@ export class CartService {
     }
   }
 
-  /**
-   * Obtiene los items del carrito
-   */
-  private async getCartItems(id_carrito: number): Promise<CartItem[]> {
-    try {
-      const result = await conexion.query(
-        `SELECT 
-           ci.*,
-           p.nombre as producto_nombre,
-           p.stock as stock_actual,
-           p.precio as precio_actual,
-           CASE WHEN p.stock >= ci.cantidad THEN 1 ELSE 0 END as disponible
-         FROM carrito_items ci
-         INNER JOIN productos p ON ci.id_producto = p.id_producto
-         WHERE ci.id_carrito = ?`,
-        [id_carrito]
-      );
-
-      return result.map((item: any) => ({
-        id_producto: item.id_producto,
-        cantidad: item.cantidad,
-        precio_unitario: item.precio_unitario,
-        precio_total: item.precio_total,
-        disponible: Boolean(item.disponible),
-        stock_actual: item.stock_actual
-      }));
-    } catch (error) {
-      console.error("Error al obtener items del carrito:", error);
-      return [];
-    }
-  }
-
-  /**
-   * Crea un nuevo carrito para un usuario
-   */
-  async createCart(id_usuario: number): Promise<{ success: boolean; message: string; cart_id?: number }> {
-    try {
-      await conexion.execute("START TRANSACTION");
-
-      const result = await conexion.execute(
-        `INSERT INTO carrito_compras (id_usuario, fecha_actualizacion) VALUES (?, NOW())`,
-        [id_usuario]
-      );
-
-      if (result.affectedRows && result.affectedRows > 0) {
-        await conexion.execute("COMMIT");
-        return {
-          success: true,
-          message: "Carrito creado correctamente",
-          cart_id: (result as any).insertId
-        };
-      } else {
-        await conexion.execute("ROLLBACK");
-        return {
-          success: false,
-          message: "Error al crear carrito"
-        };
-      }
-    } catch (error) {
-      await conexion.execute("ROLLBACK");
-      console.error("Error al crear carrito:", error);
-      return {
-        success: false,
-        message: "Error interno del servidor"
-      };
-    }
-  }
+  // El carrito se crea automáticamente al agregar el primer producto
 
   /**
    * Agrega un producto al carrito
@@ -145,55 +98,30 @@ export class CartService {
 
       await conexion.execute("START TRANSACTION");
 
-      // Obtener o crear carrito
-      let cartResult = await conexion.query(
-        "SELECT id_carrito FROM carrito_compras WHERE id_usuario = ?",
-        [id_usuario]
-      );
-
-      let id_carrito: number;
-      if (cartResult.length === 0) {
-        const newCart = await conexion.execute(
-          "INSERT INTO carrito_compras (id_usuario, fecha_actualizacion) VALUES (?, NOW())",
-          [id_usuario]
-        );
-        id_carrito = (newCart as any).insertId;
-      } else {
-        id_carrito = cartResult[0].id_carrito;
-      }
-
-      // Verificar si el producto ya está en el carrito
+      // Verificar si el producto ya está en el carrito (UNIQUE KEY usuario_producto)
       const existingItem = await conexion.query(
-        "SELECT * FROM carrito_items WHERE id_carrito = ? AND id_producto = ?",
-        [id_carrito, id_producto]
+        "SELECT * FROM carrito WHERE id_usuario = ? AND id_producto = ?",
+        [id_usuario, id_producto]
       );
 
       if (existingItem.length > 0) {
         // Actualizar cantidad existente
         const nuevaCantidad = existingItem[0].cantidad + cantidad;
-        const nuevoPrecioTotal = nuevaCantidad * producto[0].precio;
-
+        
         await conexion.execute(
-          `UPDATE carrito_items 
-           SET cantidad = ?, precio_total = ?, fecha_actualizacion = NOW()
-           WHERE id_carrito = ? AND id_producto = ?`,
-          [nuevaCantidad, nuevoPrecioTotal, id_carrito, id_producto]
+          `UPDATE carrito 
+           SET cantidad = ?, fecha_agregado = NOW()
+           WHERE id_usuario = ? AND id_producto = ?`,
+          [nuevaCantidad, id_usuario, id_producto]
         );
       } else {
         // Agregar nuevo item
-        const precioTotal = cantidad * producto[0].precio;
         await conexion.execute(
-          `INSERT INTO carrito_items (id_carrito, id_producto, cantidad, precio_unitario, precio_total, fecha_actualizacion)
-           VALUES (?, ?, ?, ?, ?, NOW())`,
-          [id_carrito, id_producto, cantidad, producto[0].precio, precioTotal]
+          `INSERT INTO carrito (id_usuario, id_producto, cantidad, fecha_agregado)
+           VALUES (?, ?, ?, NOW())`,
+          [id_usuario, id_producto, cantidad]
         );
       }
-
-      // Actualizar fecha del carrito
-      await conexion.execute(
-        "UPDATE carrito_compras SET fecha_actualizacion = NOW() WHERE id_carrito = ?",
-        [id_carrito]
-      );
 
       await conexion.execute("COMMIT");
 
@@ -242,34 +170,14 @@ export class CartService {
 
       await conexion.execute("START TRANSACTION");
 
-      const cartResult = await conexion.query(
-        "SELECT id_carrito FROM carrito_compras WHERE id_usuario = ?",
-        [id_usuario]
-      );
-
-      if (cartResult.length === 0) {
-        await conexion.execute("ROLLBACK");
-        return {
-          success: false,
-          message: "Carrito no encontrado"
-        };
-      }
-
-      const id_carrito = cartResult[0].id_carrito;
-      const nuevoPrecioTotal = nuevaCantidad * producto[0].precio;
-
       const result = await conexion.execute(
-        `UPDATE carrito_items 
-         SET cantidad = ?, precio_total = ?, fecha_actualizacion = NOW()
-         WHERE id_carrito = ? AND id_producto = ?`,
-        [nuevaCantidad, nuevoPrecioTotal, id_carrito, id_producto]
+        `UPDATE carrito 
+         SET cantidad = ?, fecha_agregado = NOW()
+         WHERE id_usuario = ? AND id_producto = ?`,
+        [nuevaCantidad, id_usuario, id_producto]
       );
 
       if (result.affectedRows && result.affectedRows > 0) {
-        await conexion.execute(
-          "UPDATE carrito_compras SET fecha_actualizacion = NOW() WHERE id_carrito = ?",
-          [id_carrito]
-        );
         await conexion.execute("COMMIT");
         return {
           success: true,
@@ -299,31 +207,12 @@ export class CartService {
     try {
       await conexion.execute("START TRANSACTION");
 
-      const cartResult = await conexion.query(
-        "SELECT id_carrito FROM carrito_compras WHERE id_usuario = ?",
-        [id_usuario]
-      );
-
-      if (cartResult.length === 0) {
-        await conexion.execute("ROLLBACK");
-        return {
-          success: false,
-          message: "Carrito no encontrado"
-        };
-      }
-
-      const id_carrito = cartResult[0].id_carrito;
-
       const result = await conexion.execute(
-        "DELETE FROM carrito_items WHERE id_carrito = ? AND id_producto = ?",
-        [id_carrito, id_producto]
+        "DELETE FROM carrito WHERE id_usuario = ? AND id_producto = ?",
+        [id_usuario, id_producto]
       );
 
       if (result.affectedRows && result.affectedRows > 0) {
-        await conexion.execute(
-          "UPDATE carrito_compras SET fecha_actualizacion = NOW() WHERE id_carrito = ?",
-          [id_carrito]
-        );
         await conexion.execute("COMMIT");
         return {
           success: true,
@@ -353,29 +242,9 @@ export class CartService {
     try {
       await conexion.execute("START TRANSACTION");
 
-      const cartResult = await conexion.query(
-        "SELECT id_carrito FROM carrito_compras WHERE id_usuario = ?",
+      await conexion.execute(
+        "DELETE FROM carrito WHERE id_usuario = ?",
         [id_usuario]
-      );
-
-      if (cartResult.length === 0) {
-        await conexion.execute("ROLLBACK");
-        return {
-          success: false,
-          message: "Carrito no encontrado"
-        };
-      }
-
-      const id_carrito = cartResult[0].id_carrito;
-
-      await conexion.execute(
-        "DELETE FROM carrito_items WHERE id_carrito = ?",
-        [id_carrito]
-      );
-
-      await conexion.execute(
-        "UPDATE carrito_compras SET fecha_actualizacion = NOW() WHERE id_carrito = ?",
-        [id_carrito]
       );
 
       await conexion.execute("COMMIT");
@@ -479,32 +348,53 @@ export class CartService {
 
       await conexion.execute("START TRANSACTION");
 
-      // Crear pedido
-      const total = validation.items_validated.reduce((sum, item) => sum + item.precio_total, 0);
-      const fechaEntregaEstimada = new Date();
-      fechaEntregaEstimada.setDate(fechaEntregaEstimada.getDate() + 3); // 3 días por defecto
-
-      const pedidoResult = await conexion.execute(
-        `INSERT INTO pedidos (id_consumidor, fecha, estado, total, direccionEntrega, notas, fecha_entrega_estimada, metodo_pago)
-         VALUES (?, NOW(), 'pendiente', ?, ?, ?, ?, ?)`,
-        [id_usuario, total, direccionEntrega, notas, fechaEntregaEstimada, metodo_pago]
-      );
-
-      const id_pedido = (pedidoResult as any).insertId;
-
-      // Crear detalles del pedido
+      // Agrupar productos por productor
+      const productosPorProductor = new Map<number, CartItem[]>();
+      
       for (const item of validation.items_validated) {
-        await conexion.execute(
-          `INSERT INTO detalle_pedidos (id_pedido, id_producto, precio_unitario, cantidad, Precio_total)
-           VALUES (?, ?, ?, ?, ?)`,
-          [id_pedido, item.id_producto, item.precio_unitario, item.cantidad, item.precio_total]
+        const producto = await conexion.query(
+          "SELECT id_usuario FROM productos WHERE id_producto = ?",
+          [item.id_producto]
+        );
+        
+        if (producto.length > 0) {
+          const id_productor = producto[0].id_usuario;
+          if (!productosPorProductor.has(id_productor)) {
+            productosPorProductor.set(id_productor, []);
+          }
+          productosPorProductor.get(id_productor)!.push(item);
+        }
+      }
+
+      const pedidosCreados: number[] = [];
+
+      // Crear un pedido por cada productor
+      for (const [id_productor, items] of productosPorProductor) {
+        const total = items.reduce((sum, item) => sum + item.precio_total, 0);
+
+        const pedidoResult = await conexion.execute(
+          `INSERT INTO pedidos (id_consumidor, id_productor, total, estado, direccion_entrega, metodo_pago, estado_pago, notas)
+           VALUES (?, ?, ?, 'pendiente', ?, ?, 'pendiente', ?)`,
+          [id_usuario, id_productor, total, direccionEntrega, metodo_pago, notas || null]
         );
 
-        // Reducir stock
-        await conexion.execute(
-          "UPDATE productos SET stock = stock - ? WHERE id_producto = ?",
-          [item.cantidad, item.id_producto]
-        );
+        const id_pedido = (pedidoResult as any).insertId;
+        pedidosCreados.push(id_pedido);
+
+        // Crear detalles del pedido
+        for (const item of items) {
+          await conexion.execute(
+            `INSERT INTO detalle_pedidos (id_pedido, id_producto, cantidad, precio_unitario, subtotal)
+             VALUES (?, ?, ?, ?, ?)`,
+            [id_pedido, item.id_producto, item.cantidad, item.precio_unitario, item.precio_total]
+          );
+
+          // Reducir stock
+          await conexion.execute(
+            "UPDATE productos SET stock = stock - ? WHERE id_producto = ?",
+            [item.cantidad, item.id_producto]
+          );
+        }
       }
 
       // Vaciar carrito
@@ -514,8 +404,8 @@ export class CartService {
 
       return {
         success: true,
-        message: "Pedido creado correctamente",
-        pedido_id: id_pedido
+        message: `Pedido${pedidosCreados.length > 1 ? 's' : ''} creado${pedidosCreados.length > 1 ? 's' : ''} correctamente`,
+        pedido_id: pedidosCreados[0] // Retornar el primer pedido para compatibilidad
       };
     } catch (error) {
       await conexion.execute("ROLLBACK");
@@ -533,8 +423,8 @@ export class CartService {
   async cleanupExpiredCarts(): Promise<{ success: boolean; message: string; deleted: number }> {
     try {
       const result = await conexion.execute(
-        `DELETE FROM carrito_compras 
-         WHERE fecha_actualizacion < DATE_SUB(NOW(), INTERVAL ? HOUR)`,
+        `DELETE FROM carrito 
+         WHERE fecha_agregado < DATE_SUB(NOW(), INTERVAL ? HOUR)`,
         [this.CART_EXPIRY_HOURS]
       );
 

@@ -5,7 +5,8 @@ import { AuthMiddleware } from "../Middlewares/AuthMiddleware.ts";
 const router = new Router();
 
 // 📌 Rutas públicas para categorías
-router.get("/", CategoriasController.ListarCategorias);
+router.get("/categorias", CategoriasController.ListarCategorias);
+router.get("/", CategoriasController.ListarCategorias); // Alias para compatibilidad
 router.get("/categorias/:id_categoria", CategoriasController.ObtenerCategoriaPorId);
 router.get("/categorias/:id_categoria/productos", CategoriasController.ObtenerProductosPorCategoria);
 router.get("/productos/:id_producto/categorias", CategoriasController.ObtenerCategoriasDeProducto);

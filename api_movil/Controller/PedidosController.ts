@@ -66,7 +66,7 @@ export const postPedido = async (ctx: Context) => {
   }
 };
 
-export const putPedido = async (ctx: RouterContext<"/Pedido/:id">) => {
+export const putPedido = async (ctx: RouterContext<"/pedidos/:id">) => {
   try {
     const id_pedido = Number(ctx.params.id);
     if (isNaN(id_pedido) || id_pedido <= 0) {
@@ -102,7 +102,7 @@ export const putPedido = async (ctx: RouterContext<"/Pedido/:id">) => {
   }
 };
 
-export const deletePedido = async (ctx: RouterContext<"/Pedido/:id">) => {
+export const deletePedido = async (ctx: RouterContext<"/pedidos/:id">) => {
   try {
     const id_pedido = Number(ctx.params.id);
     if (isNaN(id_pedido) || id_pedido <= 0) {

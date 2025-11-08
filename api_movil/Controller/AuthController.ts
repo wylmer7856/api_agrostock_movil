@@ -76,17 +76,7 @@ export class AuthController {
         return;
       }
 
-      // Verificar si el usuario está bloqueado
-      if (usuario.bloqueado_hasta && new Date(usuario.bloqueado_hasta) > new Date()) {
-        ctx.response.status = 423;
-        ctx.response.body = {
-          success: false,
-          error: "Cuenta bloqueada",
-          message: `Tu cuenta está bloqueada hasta ${new Date(usuario.bloqueado_hasta).toLocaleString()}`,
-          bloqueado_hasta: usuario.bloqueado_hasta
-        };
-        return;
-      }
+      // Verificación de bloqueo removida - la base de datos simplificada no tiene esta columna
 
       // Verificar si el usuario está activo
       if (usuario.activo === false) {
@@ -103,62 +93,23 @@ export class AuthController {
       const passwordValid = await securityService.verifyPassword(password, usuario.password);
       
       if (!passwordValid) {
-        // Incrementar intentos de login
-        await conexion.execute(
-          "UPDATE usuarios SET intentos_login = intentos_login + 1 WHERE id_usuario = ?",
-          [usuario.id_usuario]
-        );
-
-        const maxIntentos = 5; // Configurable
-        const intentosActuales = (usuario.intentos_login || 0) + 1;
-
-        if (intentosActuales >= maxIntentos) {
-          // Bloquear cuenta por 30 minutos
-          const bloqueadoHasta = new Date();
-          bloqueadoHasta.setMinutes(bloqueadoHasta.getMinutes() + 30);
-          
-          await conexion.execute(
-            "UPDATE usuarios SET bloqueado_hasta = ? WHERE id_usuario = ?",
-            [bloqueadoHasta, usuario.id_usuario]
-          );
-
-          ctx.response.status = 423;
-          ctx.response.body = {
-            success: false,
-            error: "Cuenta bloqueada",
-            message: `Demasiados intentos fallidos. Tu cuenta está bloqueada por 30 minutos.`,
-            bloqueado_hasta: bloqueadoHasta,
-            intentos_restantes: 0
-          };
-          return;
-        }
-
         ctx.response.status = 401;
         ctx.response.body = {
           success: false,
           error: "Credenciales inválidas",
-          message: "Email o contraseña incorrectos",
-          intentos_restantes: maxIntentos - intentosActuales
+          message: "Email o contraseña incorrectos"
         };
         return;
       }
 
-      // Login exitoso - resetear intentos y actualizar último acceso
+      // Login exitoso - actualizar último acceso
       await conexion.execute(
-        "UPDATE usuarios SET intentos_login = 0, bloqueado_hasta = NULL, ultimo_acceso = NOW() WHERE id_usuario = ?",
+        "UPDATE usuarios SET ultimo_acceso = NOW() WHERE id_usuario = ?",
         [usuario.id_usuario]
       );
 
-      // Crear sesión
+      // Crear sesión (simplificado - sin tabla de sesiones)
       const sessionId = securityService.generateSessionId();
-      const ipAddress = ctx.request.ip || 'unknown';
-      const userAgent = ctx.request.headers.get('user-agent') || '';
-
-      await conexion.execute(
-        `INSERT INTO sesiones_usuario (id_usuario, session_id, ip_address, user_agent, fecha_inicio, fecha_ultima_actividad)
-         VALUES (?, ?, ?, ?, NOW(), NOW())`,
-        [usuario.id_usuario, sessionId, ipAddress, userAgent]
-      );
 
       // Crear JWT con información adicional
       const payload: Payload = {
@@ -173,18 +124,7 @@ export class AuthController {
       const header: Header = { alg: "HS256", typ: "JWT" };
       const jwt = await create(header, payload, key);
 
-      // Crear notificación de login exitoso
-      await notificationService.createNotification({
-        id_usuario: usuario.id_usuario!,
-        titulo: "🔐 Inicio de sesión exitoso",
-        mensaje: `Has iniciado sesión desde ${ipAddress}`,
-        tipo: 'success',
-        datos_extra: {
-          ip_address: ipAddress,
-          user_agent: userAgent,
-          session_id: sessionId
-        }
-      });
+      // Notificación de login exitoso (simplificado - sin tabla de notificaciones)
 
       ctx.response.status = 200;
       ctx.response.body = {
@@ -192,14 +132,19 @@ export class AuthController {
         message: "Login exitoso",
         token: jwt,
         usuario: {
-          id: usuario.id_usuario,
+          id_usuario: usuario.id_usuario,
+          id: usuario.id_usuario, // Compatibilidad
           nombre: usuario.nombre,
           email: usuario.email,
           rol: usuario.rol,
-          email_verificado: usuario.email_verificado,
-          telefono_verificado: usuario.telefono_verificado,
-          fecha_registro: usuario.fecha_registro,
-          ultimo_acceso: usuario.ultimo_acceso
+          telefono: usuario.telefono || null,
+          direccion: usuario.direccion || null,
+          id_ciudad: usuario.id_ciudad || null,
+          activo: usuario.activo !== undefined ? usuario.activo : true,
+          email_verificado: usuario.email_verificado || false,
+          foto_perfil: usuario.foto_perfil || null,
+          fecha_registro: usuario.fecha_registro || null,
+          ultimo_acceso: usuario.ultimo_acceso || null
         },
         session_id: sessionId,
         expires_in: 24 * 60 * 60 // 24 horas en segundos
@@ -310,42 +255,25 @@ export class AuthController {
         return;
       }
 
-      // Generar token de verificación de email
-      const verificationToken = await securityService.generateEmailVerificationHash(email);
-      await conexion.execute(
-        `INSERT INTO tokens_verificacion (id_usuario, token, tipo, expiracion)
-         VALUES (?, ?, 'email', DATE_ADD(NOW(), INTERVAL 24 HOUR))`,
-        [result.usuario!.id_usuario, verificationToken]
-      );
-
-      // Enviar email de bienvenida
-      await emailService.sendWelcomeEmail(email, nombre, rol);
-
-      // Crear notificación de bienvenida
-      await notificationService.createNotification({
-        id_usuario: Number(result.usuario!.id_usuario),
-        titulo: "🎉 ¡Bienvenido a AgroStock!",
-        mensaje: "Tu cuenta ha sido creada exitosamente. ¡Explora todos los productos frescos disponibles!",
-        tipo: 'success',
-        datos_extra: {
-          action: 'explore_products'
-        }
-      });
+      // Email de bienvenida (opcional - puede fallar si no está configurado)
+      try {
+        await emailService.sendWelcomeEmail(email, nombre, rol);
+      } catch (error) {
+        console.warn('No se pudo enviar email de bienvenida:', error);
+      }
 
       ctx.response.status = 201;
       ctx.response.body = {
         success: true,
         message: "Usuario registrado exitosamente",
         usuario: {
+          id_usuario: result.usuario!.id_usuario,
           id: result.usuario!.id_usuario,
           nombre: result.usuario!.nombre,
           email: result.usuario!.email,
           rol: result.usuario!.rol,
-          email_verificado: false,
-          telefono_verificado: false
-        },
-        verification_required: true,
-        message_email: "Se ha enviado un email de verificación a tu correo electrónico"
+          email_verificado: false
+        }
       };
     } catch (error) {
       console.error("Error en registro:", error);
@@ -363,17 +291,7 @@ export class AuthController {
    */
   static async logout(ctx: Context) {
     try {
-      const user = ctx.state.user;
-      const sessionId = user?.session_id;
-
-      if (sessionId) {
-        // Invalidar sesión
-        await conexion.execute(
-          "UPDATE sesiones_usuario SET activa = 0 WHERE session_id = ?",
-          [sessionId]
-        );
-      }
-
+      // Logout simplificado - solo limpiar token del cliente
       ctx.response.status = 200;
       ctx.response.body = {
         success: true,
@@ -407,28 +325,7 @@ export class AuthController {
         return;
       }
 
-      // Verificar que la sesión sigue activa
-      const session = await conexion.query(
-        "SELECT * FROM sesiones_usuario WHERE session_id = ? AND activa = 1",
-        [user.session_id]
-      );
-
-      if (session.length === 0) {
-        ctx.response.status = 401;
-        ctx.response.body = {
-          success: false,
-          error: "Sesión expirada",
-          message: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente."
-        };
-        return;
-      }
-
-      // Actualizar última actividad
-      await conexion.execute(
-        "UPDATE sesiones_usuario SET fecha_ultima_actividad = NOW() WHERE session_id = ?",
-        [user.session_id]
-      );
-
+      // Verificación simplificada - solo verificar que el token es válido
       ctx.response.status = 200;
       ctx.response.body = {
         success: true,
@@ -436,8 +333,7 @@ export class AuthController {
         usuario: {
           id: user.id,
           rol: user.rol,
-          email: user.email,
-          session_id: user.session_id
+          email: user.email
         }
       };
     } catch (error) {
@@ -518,13 +414,7 @@ export class AuthController {
         [hashedNewPassword, user.id]
       );
 
-      // Crear notificación
-      await notificationService.createNotification({
-        id_usuario: user.id,
-        titulo: "🔐 Contraseña actualizada",
-        mensaje: "Tu contraseña ha sido actualizada exitosamente",
-        tipo: 'success'
-      });
+      // Notificación de cambio de contraseña (simplificado)
 
       ctx.response.status = 200;
       ctx.response.body = {

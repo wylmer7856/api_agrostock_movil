@@ -4,13 +4,15 @@ interface PedidoData {
   id_pedido: number | null;
   id_consumidor: number;
   id_productor: number;
-  fecha: Date;
-  estado: "pendiente" | "confirmado" | "comprado";
   total: number;
-  direccionEntrega: string;
-  notas?: string;
-  fecha_entrega_estimada: Date;
-  metodo_pago: string;
+  estado: "pendiente" | "confirmado" | "en_preparacion" | "en_camino" | "entregado" | "cancelado";
+  direccion_entrega: string;
+  id_ciudad_entrega?: number | null;
+  metodo_pago: "efectivo" | "transferencia" | "nequi" | "daviplata" | "pse" | "tarjeta";
+  estado_pago?: "pendiente" | "pagado" | "reembolsado";
+  notas?: string | null;
+  fecha_pedido?: string | null;
+  fecha_entrega?: string | null;
 }
 
 
@@ -23,13 +25,8 @@ export class PedidosModel {
 
   public async ListarPedidos(): Promise<PedidoData[]> {
     try {
-      const result = await conexion.query("SELECT * FROM pedidos");
-      // deno-lint-ignore no-explicit-any
-      return result.map((row: any) => ({
-        ...row,
-        fecha: new Date(row.fecha),
-        fecha_entrega_estimada: new Date(row.fecha_entrega_estimada),
-      })) as PedidoData[];
+      const result = await conexion.query("SELECT * FROM pedidos ORDER BY fecha_pedido DESC");
+      return result as PedidoData[];
     } catch (error) {
       console.error("Error al listar pedidos:", error);
       throw new Error("Error al listar pedidos.");
@@ -42,12 +39,16 @@ export class PedidosModel {
         throw new Error("No se proporcionó un objeto de pedido.");
       }
 
-      const { id_consumidor, id_productor, fecha, estado, total, direccionEntrega, notas, fecha_entrega_estimada, metodo_pago } = this._objPedido;
+      const { id_consumidor, id_productor, total, estado, direccion_entrega, id_ciudad_entrega, metodo_pago, estado_pago, notas } = this._objPedido;
+
+      if (!id_consumidor || !id_productor || !total || !direccion_entrega || !metodo_pago) {
+        throw new Error("Faltan campos obligatorios para crear el pedido.");
+      }
 
       await conexion.execute("START TRANSACTION");
 
-      const result = await conexion.execute(`INSERT INTO pedidos (id_consumidor, id_productor, fecha, estado, total, direccionEntrega, notas, fecha_entrega_estimada, metodo_pago) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id_consumidor, id_productor, fecha, estado, total, direccionEntrega, notas, fecha_entrega_estimada, metodo_pago]
+      const result = await conexion.execute(`INSERT INTO pedidos (id_consumidor, id_productor, total, estado, direccion_entrega, id_ciudad_entrega, metodo_pago, estado_pago, notas) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id_consumidor, id_productor, total, estado || 'pendiente', direccion_entrega, id_ciudad_entrega || null, metodo_pago, estado_pago || 'pendiente', notas || null]
       );
 
       if (result && result.affectedRows && result.affectedRows > 0) {
@@ -58,11 +59,7 @@ export class PedidosModel {
         return {
           success: true,
           message: "Pedido agregado exitosamente.",
-          pedido: {
-            ...queryResult[0],
-            fecha: new Date(queryResult[0].fecha),
-            fecha_entrega_estimada: new Date(queryResult[0].fecha_entrega_estimada),
-          } as PedidoData,
+          pedido: queryResult[0] as PedidoData,
         };
       } else {
         await conexion.execute("ROLLBACK");
@@ -87,12 +84,12 @@ export class PedidosModel {
         throw new Error("No se proporcionó un objeto de pedido.");
       }
 
-      const { id_consumidor, id_productor, fecha, estado, total, direccionEntrega, notas, fecha_entrega_estimada, metodo_pago } = this._objPedido;
+      const { id_consumidor, id_productor, total, estado, direccion_entrega, id_ciudad_entrega, metodo_pago, estado_pago, notas, fecha_entrega } = this._objPedido;
 
       await conexion.execute("START TRANSACTION");
 
-      const result = await conexion.execute(`UPDATE pedidos SET id_consumidor = ?, id_productor = ?, fecha = ?, estado = ?, total = ?, direccionEntrega = ?, notas = ?, fecha_entrega_estimada = ?, metodo_pago = ? WHERE id_pedido = ?`,
-        [id_consumidor, id_productor, fecha, estado, total, direccionEntrega, notas, fecha_entrega_estimada, metodo_pago, id_pedido]
+      const result = await conexion.execute(`UPDATE pedidos SET id_consumidor = ?, id_productor = ?, total = ?, estado = ?, direccion_entrega = ?, id_ciudad_entrega = ?, metodo_pago = ?, estado_pago = ?, notas = ?, fecha_entrega = ? WHERE id_pedido = ?`,
+        [id_consumidor, id_productor, total, estado, direccion_entrega, id_ciudad_entrega || null, metodo_pago, estado_pago || 'pendiente', notas || null, fecha_entrega || null, id_pedido]
       );
 
       if (result && result.affectedRows && result.affectedRows > 0) {

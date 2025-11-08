@@ -1,11 +1,11 @@
 ### Usuarios
 
 ### Obtener todos los usuarios
-GET http://127.0.0.1:5000/Usuario
+GET http://127.0.0.1:8000/Usuario
 
 ###
 ### Crear nuevo usuario
-POST http://127.0.0.1:5000/Usuario
+POST http://127.0.0.1:8000/Usuario
 Content-Type: application/json
 
 {
@@ -20,7 +20,7 @@ Content-Type: application/json
 
 ###
 ### Editar un usuario existente
-PUT http://127.0.0.1:5000/Usuario
+PUT http://127.0.0.1:8000/Usuario
 Content-Type: application/json
 
 {
@@ -36,94 +36,94 @@ Content-Type: application/json
 
 ###
 ### Eliminar un usuario por ID
-DELETE http://127.0.0.1:5000/Usuario/2
+DELETE http://127.0.0.1:8000/Usuario/2
 
 
 ###
 
 ### 📌 Filtrar usuarios por ciudad
-GET http://127.0.0.1:5000/Usuario/Ciudad/1
+GET http://127.0.0.1:8000/Usuario/Ciudad/1
 
 ###
 
 ### 📌 Filtrar usuarios por departamento
-GET http://127.0.0.1:5000/Usuario/Departamento/2
+GET http://127.0.0.1:8000/Usuario/Departamento/2
 
 ###
 
 ### 📌 Filtrar usuarios por región
-GET http://127.0.0.1:5000/Usuario/Region/3
+GET http://127.0.0.1:8000/Usuario/Region/3
 
 ###
 
 ### Autenticación
 
 ### Login
-POST http://127.0.0.1:5000/auth/login
+POST http://127.0.0.1:8000/auth/login
 Content-Type: application/json
 
 {
-  "email": "juan@mail.com",
-  "password": "123456789"
+  "email": "admin@agrostock.com",
+  "password": "admin123"
 }
 
 
 ### Productos
 
 ### Obtener todos los productos
-GET http://127.0.0.1:5000/productos
+GET http://127.0.0.1:8000/productos
 
 ###
 ### Obtener productos con filtros y paginación
-GET http://127.0.0.1:5000/productos?nombre=tomate&precio_min=2000&precio_max=10000&orden=precio_asc&limite=10&pagina=1
+GET http://127.0.0.1:8000/productos?nombre=tomate&precio_min=2000&precio_max=10000&orden=precio_asc&limite=10&pagina=1
 
 ###
 ### Productos por rango de precios
-GET http://127.0.0.1:5000/productos?precio_min=3000&precio_max=8000&orden=precio_asc
+GET http://127.0.0.1:8000/productos?precio_min=3000&precio_max=8000&orden=precio_asc
 
 ###
 ### Productos por unidad de medida
-GET http://127.0.0.1:5000/productos?unidadMedida=kg&disponible=true
+GET http://127.0.0.1:8000/productos?unidadMedida=kg&disponible=true
 
 ###
 ### Productos ordenados por stock
-GET http://127.0.0.1:5000/productos?orden=stock_desc&limite=15
+GET http://127.0.0.1:8000/productos?orden=stock_desc&limite=15
 
 ###
 ### Búsqueda combinada
-GET http://127.0.0.1:5000/productos?nombre=cherry&id_ciudad_origen=1&stock_min=20&orden=nombre_asc
+GET http://127.0.0.1:8000/productos?nombre=cherry&id_ciudad_origen=1&stock_min=20&orden=nombre_asc
 
 ###
 ### Obtener productos disponibles
-GET http://127.0.0.1:5000/productos/disponibles
+GET http://127.0.0.1:8000/productos/disponibles
 
 ###
 ### Obtener productos disponibles con filtros
-GET http://127.0.0.1:5000/productos/disponibles?orden=nombre_asc&limite=20&id_ciudad_origen=1
+GET http://127.0.0.1:8000/productos/disponibles?orden=nombre_asc&limite=20&id_ciudad_origen=1
 
 ###
 ### Buscar productos por nombre
-GET http://127.0.0.1:5000/productos/buscar?nombre=manzana
+GET http://127.0.0.1:8000/productos/buscar?nombre=manzana
 
 ###
 ### Buscar productos con múltiples filtros
-GET http://127.0.0.1:5000/productos/buscar?nombre=papa&precio_max=5000&stock_min=10&orden=precio_desc
+GET http://127.0.0.1:8000/productos/buscar?nombre=papa&precio_max=5000&stock_min=10&orden=precio_desc
 
 ###
 ### Obtener productos de un usuario específico
-GET http://127.0.0.1:5000/productos/usuario/1
+GET http://127.0.0.1:8000/productos/usuario/1
 
 ###
 ### Obtener productos de un usuario con filtros
-GET http://127.0.0.1:5000/productos/usuario/1?disponible=true&orden=precio_asc&limite=5
+GET http://127.0.0.1:8000/productos/usuario/1?disponible=true&orden=precio_asc&limite=5
 
 ###
 ### Obtener un producto por ID
-GET http://127.0.0.1:5000/productos/8
+GET http://127.0.0.1:8000/productos/8
 
 ###
 ### Agregar un nuevo producto
-POST http://127.0.0.1:5000/productos
+POST http://127.0.0.1:8000/productos
 Content-Type: application/json
 
 {
@@ -141,7 +141,7 @@ Content-Type: application/json
 
 ###
 ### Editar un producto existente
-PUT http://127.0.0.1:5000/productos/8
+PUT http://127.0.0.1:8000/productos/8
 Content-Type: application/json
 
 {
@@ -159,55 +159,55 @@ Content-Type: application/json
 
 ###
 ### Eliminar un producto
-DELETE http://127.0.0.1:5000/productos/8
+DELETE http://127.0.0.1:8000/productos/8
 
 
 ### Regiones / Departamentos / Ciudades
 
 ### Obtener todas las regiones
-GET http://127.0.0.1:5000/regiones
+GET http://127.0.0.1:8000/regiones
 
 ###
 ### Obtener todos los departamentos
-GET http://127.0.0.1:5000/departamentos
+GET http://127.0.0.1:8000/departamentos
 
 ###
 ### Obtener todas las ciudades
-GET http://127.0.0.1:5000/ciudades
+GET http://127.0.0.1:8000/ciudades
 
 
 ### Alertas
 
 ### Obtener todas las alertas
-GET http://127.0.0.1:5000/alertas
+GET http://127.0.0.1:8000/alertas
 
 ###
 ### Obtener alertas activas (últimos 7 días)
-GET http://127.0.0.1:5000/alertas/activas
+GET http://127.0.0.1:8000/alertas/activas
 
 ###
 ### Generar alertas automáticas
-POST http://127.0.0.1:5000/alertas/generar
+POST http://127.0.0.1:8000/alertas/generar
 Content-Type: application/json
 
 ###
 ### Marcar alerta como resuelta
-PUT http://127.0.0.1:5000/alertas/1/resolver
+PUT http://127.0.0.1:8000/alertas/1/resolver
 Content-Type: application/json
 
 ###
 ### Eliminar una alerta por ID
-DELETE http://127.0.0.1:5000/alertas/2
+DELETE http://127.0.0.1:8000/alertas/2
 
 
 ### Detalles de Pedidos
 
 ### Obtener todos los detalles de pedidos
-GET http://127.0.0.1:5000/detalle_pedidos
+GET http://127.0.0.1:8000/detalle_pedidos
 
 ###
 ### Agregar un nuevo detalle de pedido
-POST http://127.0.0.1:5000/detalle_pedidos
+POST http://127.0.0.1:8000/detalle_pedidos
 Content-Type: application/json
 
 {
@@ -220,17 +220,17 @@ Content-Type: application/json
 
 ###
 ### Eliminar un detalle de pedido
-DELETE http://127.0.0.1:5000/detalle_pedidos/1
+DELETE http://127.0.0.1:8000/detalle_pedidos/1
 
 
 ### Pedidos
 
 ### Obtener todos los pedidos
-GET http://127.0.0.1:5000/Pedidos
+GET http://127.0.0.1:8000/Pedidos
 
 ###
 ### Crear nuevo pedido
-POST http://127.0.0.1:5000/Pedidos
+POST http://127.0.0.1:8000/Pedidos
 Content-Type: application/json
 
 {
@@ -247,7 +247,7 @@ Content-Type: application/json
 
 ###
 ### Editar un pedido existente
-PUT http://127.0.0.1:5000/Pedidos/2
+PUT http://127.0.0.1:8000/Pedidos/2
 Content-Type: application/json
 
 {
@@ -265,18 +265,18 @@ Content-Type: application/json
 
 ###
 ### Eliminar un pedido por ID
-DELETE http://127.0.0.1:5000/Pedidos/2
+DELETE http://127.0.0.1:8000/Pedidos/2
 
 
 ### Reseñas
 
 ### Obtener todas las reseñas (solo admin)
-GET http://127.0.0.1:5000/Resena
+GET http://127.0.0.1:8000/Resena
 Authorization: Bearer tu_jwt_token_aqui
 
 ###
 ### Agregar una nueva reseña (consumidor)
-POST http://127.0.0.1:5000/Resena
+POST http://127.0.0.1:8000/Resena
 Content-Type: application/json
 Authorization: Bearer tu_jwt_token_aqui
 
@@ -290,7 +290,7 @@ Authorization: Bearer tu_jwt_token_aqui
 
 ###
 ### Editar una reseña existente (consumidor)
-PUT http://127.0.0.1:5000/Resena
+PUT http://127.0.0.1:8000/Resena
 Content-Type: application/json
 Authorization: Bearer tu_jwt_token_aqui
 
@@ -305,24 +305,24 @@ Authorization: Bearer tu_jwt_token_aqui
 
 ###
 ### Eliminar una reseña por ID (admin)
-DELETE http://127.0.0.1:5000/Resena/7
+DELETE http://127.0.0.1:8000/Resena/7
 Authorization: Bearer tu_jwt_token_aqui
 
 ###
 ### Ver reseñas por producto
-GET http://127.0.0.1:5000/Resena/Producto/10
+GET http://127.0.0.1:8000/Resena/Producto/10
 Authorization: Bearer tu_jwt_token_aqui
 
 
 ### Carrito de Compras
 
 ### Obtener carrito del usuario
-GET http://127.0.0.1:5000/cart
+GET http://127.0.0.1:8000/cart
 Authorization: Bearer tu_jwt_token_aqui
 
 ###
 ### Agregar producto al carrito
-POST http://127.0.0.1:5000/cart/add
+POST http://127.0.0.1:8000/cart/add
 Content-Type: application/json
 Authorization: Bearer tu_jwt_token_aqui
 
@@ -333,7 +333,7 @@ Authorization: Bearer tu_jwt_token_aqui
 
 ###
 ### Actualizar cantidad de producto en carrito
-PUT http://127.0.0.1:5000/cart/item/10
+PUT http://127.0.0.1:8000/cart/item/10
 Content-Type: application/json
 Authorization: Bearer tu_jwt_token_aqui
 
@@ -343,22 +343,22 @@ Authorization: Bearer tu_jwt_token_aqui
 
 ###
 ### Eliminar producto del carrito
-DELETE http://127.0.0.1:5000/cart/item/10
+DELETE http://127.0.0.1:8000/cart/item/10
 Authorization: Bearer tu_jwt_token_aqui
 
 ###
 ### Vaciar carrito
-DELETE http://127.0.0.1:5000/cart/clear
+DELETE http://127.0.0.1:8000/cart/clear
 Authorization: Bearer tu_jwt_token_aqui
 
 ###
 ### Validar stock del carrito
-GET http://127.0.0.1:5000/cart/validate
+GET http://127.0.0.1:8000/cart/validate
 Authorization: Bearer tu_jwt_token_aqui
 
 ###
 ### Procesar checkout
-POST http://127.0.0.1:5000/cart/checkout
+POST http://127.0.0.1:8000/cart/checkout
 Content-Type: application/json
 Authorization: Bearer tu_jwt_token_aqui
 
@@ -371,5 +371,5 @@ Authorization: Bearer tu_jwt_token_aqui
 
 ###
 ### Obtener estadísticas del carrito
-GET http://127.0.0.1:5000/cart/stats
+GET http://127.0.0.1:8000/cart/stats
 Authorization: Bearer tu_jwt_token_aqui

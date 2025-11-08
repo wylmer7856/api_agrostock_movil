@@ -6,7 +6,7 @@ interface DetallePedidoData {
   id_producto: number;
   cantidad: number;
   precio_unitario: number;
-  precio_total: number;
+  subtotal: number;
 }
 
 export class DetallePedidosModel {
@@ -32,12 +32,16 @@ export class DetallePedidosModel {
         throw new Error("No se proporciono un objeto de detalle.");
       }
 
-      const { id_pedido, id_producto, cantidad, precio_unitario, precio_total } = this._objDetalle;
+      const { id_pedido, id_producto, cantidad, precio_unitario, subtotal } = this._objDetalle;
+
+      if (!id_pedido || !id_producto || !cantidad || !precio_unitario || subtotal === undefined) {
+        throw new Error("Faltan campos obligatorios para crear el detalle del pedido.");
+      }
 
       await conexion.execute("START TRANSACTION");
 
-      const result = await conexion.execute("INSERT INTO detalle_pedidos (id_pedido, id_producto, cantidad, precio_unitario, precio_total) VALUES (?, ?, ?, ?, ?)",
-        [id_pedido, id_producto, cantidad, precio_unitario, precio_total]
+      const result = await conexion.execute("INSERT INTO detalle_pedidos (id_pedido, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)",
+        [id_pedido, id_producto, cantidad, precio_unitario, subtotal]
       );
 
       if (result && result.affectedRows && result.affectedRows > 0) {

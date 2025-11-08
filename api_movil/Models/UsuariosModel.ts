@@ -5,16 +5,13 @@ interface UsuarioData {
   nombre: string;
   email: string;
   password: string;
-  telefono: string;
-  direccion: string;
-  id_ciudad: number;
-  rol: string;
-  // Campos adicionales de seguridad
-  intentos_login?: number;
-  bloqueado_hasta?: string | null;
-  activo?: boolean;
-  email_verificado?: boolean;
-  telefono_verificado?: boolean;
+  telefono: string | null;
+  direccion: string | null;
+  id_ciudad: number | null;
+  rol: 'admin' | 'consumidor' | 'productor';
+  activo: boolean;
+  email_verificado: boolean;
+  foto_perfil?: string | null;
   fecha_registro?: string | null;
   ultimo_acceso?: string | null;
 }
@@ -25,15 +22,13 @@ export interface UsuarioLoginData {
   nombre: string;
   email: string;
   password: string;
-  telefono: string;
-  direccion: string;
-  id_ciudad: number;
-  rol: string;
-  intentos_login: number;
-  bloqueado_hasta: string | null;
+  telefono: string | null;
+  direccion: string | null;
+  id_ciudad: number | null;
+  rol: 'admin' | 'consumidor' | 'productor';
   activo: boolean;
   email_verificado: boolean;
-  telefono_verificado: boolean;
+  foto_perfil: string | null;
   fecha_registro: string | null;
   ultimo_acceso: string | null;
 }
@@ -75,8 +70,8 @@ export class Usuario {
       await conexion.execute("START TRANSACTION");
 
       const result = await conexion.execute(
-        "INSERT INTO usuarios (nombre, email, password, telefono, direccion, id_ciudad, rol) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [nombre, email, password, telefono, direccion, id_ciudad, rol]
+        "INSERT INTO usuarios (nombre, email, password, telefono, direccion, id_ciudad, rol, activo, email_verificado) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0)",
+        [nombre, email, password, telefono || null, direccion || null, id_ciudad || null, rol]
       );
 
       if (result && result.affectedRows && result.affectedRows > 0) {
@@ -133,14 +128,28 @@ export class Usuario {
         throw new Error("No se ha proporcionado un usuario valido con ID.");
       }
 
-      const { id_usuario, nombre, email, password, telefono, direccion, id_ciudad, rol } = this._objUsuario;
+      const { id_usuario, nombre, email, password, telefono, direccion, id_ciudad, rol, activo, email_verificado, foto_perfil } = this._objUsuario;
 
       await conexion.execute("START TRANSACTION");
 
-      const result = await conexion.execute(
-        "UPDATE usuarios SET nombre = ?, email = ?, password = ?, telefono = ?, direccion = ?, id_ciudad = ?, rol = ? WHERE id_usuario = ?",
-        [nombre, email, password, telefono, direccion, id_ciudad, rol, id_usuario]
-      );
+      // Si hay password, actualizarlo, si no, mantener el actual
+      let query = "UPDATE usuarios SET nombre = ?, email = ?, telefono = ?, direccion = ?, id_ciudad = ?, rol = ?, activo = ?, email_verificado = ?";
+      let params: any[] = [nombre, email, telefono || null, direccion || null, id_ciudad || null, rol, activo !== false ? 1 : 0, email_verificado ? 1 : 0];
+      
+      if (password) {
+        query += ", password = ?";
+        params.push(password);
+      }
+      
+      if (foto_perfil !== undefined) {
+        query += ", foto_perfil = ?";
+        params.push(foto_perfil || null);
+      }
+      
+      query += " WHERE id_usuario = ?";
+      params.push(id_usuario);
+
+      const result = await conexion.execute(query, params);
 
       if (result && result.affectedRows && result.affectedRows > 0) {
         await conexion.execute("COMMIT");
@@ -166,11 +175,9 @@ export class Usuario {
       const result = await conexion.query(`
         SELECT 
           id_usuario, nombre, email, password, telefono, direccion, id_ciudad, rol,
-          COALESCE(intentos_login, 0) as intentos_login,
-          bloqueado_hasta,
           COALESCE(activo, 1) as activo,
           COALESCE(email_verificado, 0) as email_verificado,
-          COALESCE(telefono_verificado, 0) as telefono_verificado,
+          foto_perfil,
           fecha_registro,
           ultimo_acceso
         FROM usuarios 
@@ -188,11 +195,9 @@ export class Usuario {
           direccion: user.direccion,
           id_ciudad: user.id_ciudad,
           rol: user.rol,
-          intentos_login: user.intentos_login || 0,
-          bloqueado_hasta: user.bloqueado_hasta,
           activo: user.activo !== 0,
           email_verificado: user.email_verificado !== 0,
-          telefono_verificado: user.telefono_verificado !== 0,
+          foto_perfil: user.foto_perfil || null,
           fecha_registro: user.fecha_registro,
           ultimo_acceso: user.ultimo_acceso
         } as UsuarioLoginData;

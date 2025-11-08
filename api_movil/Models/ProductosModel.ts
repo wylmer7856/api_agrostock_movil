@@ -4,19 +4,28 @@ import { join } from "../Dependencies/dependencias.ts";
 export interface ProductoData {
   id_producto: number;
   nombre: string;
-  stock: number;
-  stockMinimo: number;
   descripcion?: string;
-  precio?: number;
-  id_usuario?: number;
+  precio: number;
+  stock: number;
+  stock_minimo: number;
+  unidad_medida: string;
+  id_usuario: number;
+  id_categoria?: number;
   id_ciudad_origen?: number;
-  unidadMedida?: string;
-  pesoAprox?: number;
-  imagenPrincipal?: string;
+  imagen_principal?: string;
+  imagenes_adicionales?: string | string[]; // JSON array o string
+  disponible: boolean;
+  fecha_creacion?: string;
+  fecha_actualizacion?: string;
 }
 
 export interface ProductoDataResponse extends ProductoData {
-  imagenUrl?: string | null;
+  imagenUrl?: string | null; // Para compatibilidad
+  nombre_productor?: string;
+  email_productor?: string;
+  ciudad_origen?: string;
+  departamento_origen?: string;
+  categoria_nombre?: string;
 }
 
 export class ProductosModel {
@@ -46,18 +55,19 @@ export class ProductosModel {
                     u.nombre as nombre_productor,
                     u.email as email_productor,
                     u.telefono as telefono_productor,
+                    u.foto_perfil as foto_productor,
                     c.nombre as ciudad_origen,
                     d.nombre as departamento_origen,
                     r.nombre as region_origen,
-                    GROUP_CONCAT(cat.nombre) as categorias
+                    cat.nombre as categoria_nombre,
+                    cat.imagen_url as categoria_imagen
                 FROM productos p
                 INNER JOIN usuarios u ON p.id_usuario = u.id_usuario
-                INNER JOIN ciudades c ON p.id_ciudad_origen = c.id_ciudad
-                INNER JOIN departamentos d ON c.id_departamento = d.id_departamento
-                INNER JOIN regiones r ON d.id_region = r.id_region
-                LEFT JOIN productos_categorias pc ON p.id_producto = pc.id_producto
-                LEFT JOIN categorias cat ON pc.id_categoria = cat.id_categoria AND cat.activa = 1
-                GROUP BY p.id_producto
+                LEFT JOIN ciudades c ON p.id_ciudad_origen = c.id_ciudad
+                LEFT JOIN departamentos d ON c.id_departamento = d.id_departamento
+                LEFT JOIN regiones r ON d.id_region = r.id_region
+                LEFT JOIN categorias cat ON p.id_categoria = cat.id_categoria AND cat.activa = 1
+                WHERE p.disponible = 1
                 ORDER BY p.id_producto DESC
             `);
             return result;
@@ -94,9 +104,8 @@ export class ProductosModel {
                 INNER JOIN ciudades c ON p.id_ciudad_origen = c.id_ciudad
                 INNER JOIN departamentos d ON c.id_departamento = d.id_departamento
                 INNER JOIN regiones r ON d.id_region = r.id_region
-                LEFT JOIN productos_categorias pc ON p.id_producto = pc.id_producto
-                LEFT JOIN categorias cat ON pc.id_categoria = cat.id_categoria AND cat.activa = 1
-                WHERE 1=1
+                LEFT JOIN categorias cat ON p.id_categoria = cat.id_categoria AND cat.activa = 1
+                WHERE p.disponible = 1
             `;
             
             const params: any[] = [];
@@ -107,7 +116,7 @@ export class ProductosModel {
             }
 
             if (criterios.categoria) {
-                query += " AND pc.id_categoria = ?";
+                query += " AND p.id_categoria = ?";
                 params.push(criterios.categoria);
             }
 
@@ -141,7 +150,7 @@ export class ProductosModel {
                 params.push(criterios.stock_min);
             }
 
-            query += " GROUP BY p.id_producto ORDER BY p.id_producto DESC";
+            query += " ORDER BY p.id_producto DESC";
 
             const result = await conexion.query(query, params);
             return result;
@@ -165,10 +174,8 @@ export class ProductosModel {
                 INNER JOIN ciudades c ON p.id_ciudad_origen = c.id_ciudad
                 INNER JOIN departamentos d ON c.id_departamento = d.id_departamento
                 INNER JOIN regiones r ON d.id_region = r.id_region
-                LEFT JOIN productos_categorias pc ON p.id_producto = pc.id_producto
-                LEFT JOIN categorias cat ON pc.id_categoria = cat.id_categoria AND cat.activa = 1
+                LEFT JOIN categorias cat ON p.id_categoria = cat.id_categoria AND cat.activa = 1
                 WHERE p.id_usuario = ?
-                GROUP BY p.id_producto
                 ORDER BY p.id_producto DESC
             `, [id_usuario]);
             
@@ -185,16 +192,16 @@ export class ProductosModel {
                 throw new Error("No se proporciono un objeto de producto.");
             }
 
-            const { nombre, descripcion, precio, stock, stockMinimo, id_usuario, id_ciudad_origen, unidadMedida, pesoAprox } = this._objProducto;
+            const { nombre, descripcion, precio, stock, stock_minimo, id_usuario, id_categoria, id_ciudad_origen, unidad_medida } = this._objProducto;
 
-            if (!nombre || !descripcion || precio === undefined || stock === undefined || !id_usuario || !id_ciudad_origen) {
-                throw new Error("Faltan campos obligatorios para agregar el producto.");
+            if (!nombre || precio === undefined || stock === undefined || !id_usuario) {
+                throw new Error("Faltan campos obligatorios: nombre, precio, stock, id_usuario.");
             }
 
             await conexion.execute("START TRANSACTION");
 
-            const result = await conexion.execute(`INSERT INTO productos (nombre, descripcion, precio, stock, stockMinimo, id_usuario, id_ciudad_origen, unidadMedida, pesoAprox) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [nombre, descripcion, precio, stock, stockMinimo || 10, id_usuario, id_ciudad_origen, unidadMedida, pesoAprox]
+            const result = await conexion.execute(`INSERT INTO productos (nombre, descripcion, precio, stock, stock_minimo, id_usuario, id_categoria, id_ciudad_origen, unidad_medida, disponible) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+                [nombre, descripcion || null, precio, stock, stock_minimo || 5, id_usuario, id_categoria || null, id_ciudad_origen || null, unidad_medida || 'kg']
             );
 
             if (!result || !result.affectedRows || result.affectedRows === 0) {
@@ -210,7 +217,7 @@ export class ProductosModel {
                 try {
                     rutaImagen = await this.guardarImagen(nuevoProducto.id_producto, imagenData);
                     
-                    await conexion.execute("UPDATE productos SET imagenPrincipal = ? WHERE id_producto = ?", 
+                    await conexion.execute("UPDATE productos SET imagen_principal = ? WHERE id_producto = ?", 
                     [rutaImagen, nuevoProducto.id_producto]
                     );
                 } catch (imageError) {
@@ -243,14 +250,14 @@ export class ProductosModel {
             if (!this._objProducto || !this._objProducto.id_producto) {
                 throw new Error("No se proporciono un objeto de producto valido.");
             }
-            const { id_producto, nombre, descripcion, precio, stock, stockMinimo, id_usuario, id_ciudad_origen, unidadMedida, pesoAprox } = this._objProducto;
+            const { id_producto, nombre, descripcion, precio, stock, stock_minimo, id_usuario, id_categoria, id_ciudad_origen, unidad_medida, disponible } = this._objProducto;
 
             await conexion.execute("START TRANSACTION");
 
-            let rutaImagen = this._objProducto.imagenPrincipal;
+            let rutaImagen = this._objProducto.imagen_principal;
             
             if (imagenData) {
-                if (this._objProducto.imagenPrincipal) {
+                if (this._objProducto.imagen_principal) {
                     const productDir = join(this.UPLOADS_DIR, id_producto.toString());
                     if (await this.existeDirectorio(productDir)) {
                         await Deno.remove(productDir, { recursive: true });
@@ -264,8 +271,8 @@ export class ProductosModel {
                 }
             }
 
-            const result = await conexion.execute(`UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, stock = ?, stockMinimo = ?, id_usuario = ?, id_ciudad_origen = ?, unidadMedida = ?, pesoAprox = ?, imagenPrincipal = ? WHERE id_producto = ?`,
-                [nombre, descripcion, precio, stock, stockMinimo, id_usuario, id_ciudad_origen, unidadMedida, pesoAprox, rutaImagen, id_producto]
+            const result = await conexion.execute(`UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, stock = ?, stock_minimo = ?, id_usuario = ?, id_categoria = ?, id_ciudad_origen = ?, unidad_medida = ?, imagen_principal = ?, disponible = ? WHERE id_producto = ?`,
+                [nombre, descripcion || null, precio, stock, stock_minimo || 5, id_usuario, id_categoria || null, id_ciudad_origen || null, unidad_medida || 'kg', rutaImagen, disponible !== false ? 1 : 0, id_producto]
             );
 
             if (result && result.affectedRows && result.affectedRows > 0) {

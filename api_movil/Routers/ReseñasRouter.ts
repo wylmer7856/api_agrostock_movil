@@ -10,12 +10,15 @@ import { AuthMiddleware } from "../Middlewares/AuthMiddleware.ts";
 
 const ReseñasRouter = new Router();
 
-// Rutas protegidas por rol
+// 📌 Rutas públicas (sin autenticación)
 ReseñasRouter
-  .get("/Resena", AuthMiddleware(["admin"]), getResenas) // Listar todas las reseñas
-  .post("/Resena", AuthMiddleware(["consumidor"]), postResena) // Crear reseña
-  .put("/Resena", AuthMiddleware(["consumidor"]), putResena) // Editar reseña
-  .delete("/Resena/:id", AuthMiddleware(["admin"]), deleteResena) // Eliminar reseña
-  .get("/Resena/Producto/:id", AuthMiddleware(["admin", "consumidor"]), getResenasByProducto); // Ver reseñas por producto
+  .get("/resenas/producto/:id", getResenasByProducto); // Ver reseñas por producto (público)
+
+// 📌 Rutas protegidas por rol - Usar nombres estándar REST (minúsculas)
+ReseñasRouter
+  .get("/resenas", AuthMiddleware(["admin"]), getResenas) // Listar todas las reseñas (solo admin)
+  .post("/resenas", AuthMiddleware(["consumidor", "productor"]), postResena) // Crear reseña
+  .put("/resenas/:id", AuthMiddleware(["consumidor", "productor"]), putResena) // Editar reseña
+  .delete("/resenas/:id", AuthMiddleware(["admin"]), deleteResena); // Eliminar reseña (solo admin)
 
 export { ReseñasRouter };

@@ -31,16 +31,30 @@ export const getUsuarios = async (ctx: Context) => {
     const objUsuario = new Usuario();
     const lista = await objUsuario.ListarUsuarios();
 
-    ctx.response.status = lista.length > 0 ? 200 : 404;
+    // ✅ Retornar 200 con lista vacía, no 404
+    if (lista.length === 0) {
+      ctx.response.status = 200;
+      ctx.response.body = {
+        success: true,
+        message: "No se encontraron usuarios.",
+        data: [],
+        total: 0,
+      };
+      return;
+    }
+
+    ctx.response.status = 200;
     ctx.response.body = {
-      success: lista.length > 0,
-      message: lista.length > 0 ? "Usuarios encontrados." : "No se encontraron usuarios.",
+      success: true,
+      message: `${lista.length} usuarios encontrados.`,
       data: lista,
+      total: lista.length,
     };
   } catch (error) {
     ctx.response.status = 500;
     ctx.response.body = {
       success: false,
+      error: "INTERNAL_ERROR",
       message: error instanceof Error ? error.message : "Error interno del servidor.",
     };
   }

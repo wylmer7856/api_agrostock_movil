@@ -285,6 +285,73 @@ export class EmailService {
     }
   }
 
+  /**
+   * Envía email de recuperación de contraseña
+   */
+  async sendPasswordRecoveryEmail(
+    email: string, 
+    nombre: string, 
+    token: string
+  ): Promise<{ success: boolean; message: string }> {
+    const recoveryUrl = `${Deno.env.get("FRONTEND_URL") || "http://localhost:5173"}/password-recovery?token=${token}`;
+    
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #2d5016 0%, #4a7c2a 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+          .button { display: inline-block; padding: 15px 30px; background: #4a7c2a; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .button:hover { background: #2d5016; }
+          .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+          .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔐 Recuperación de Contraseña</h1>
+          </div>
+          <div class="content">
+            <h2>Hola ${nombre},</h2>
+            <p>Recibimos una solicitud para restablecer tu contraseña en AgroStock.</p>
+            <p>Haz clic en el siguiente botón para crear una nueva contraseña:</p>
+            <div style="text-align: center;">
+              <a href="${recoveryUrl}" class="button">Restablecer Contraseña</a>
+            </div>
+            <p>O copia y pega este enlace en tu navegador:</p>
+            <p style="word-break: break-all; color: #4a7c2a;">${recoveryUrl}</p>
+            <div class="warning">
+              <strong>⚠️ Importante:</strong>
+              <ul>
+                <li>Este enlace expirará en 1 hora</li>
+                <li>Si no solicitaste este cambio, ignora este email</li>
+                <li>Nunca compartas este enlace con nadie</li>
+              </ul>
+            </div>
+            <p>Si tienes problemas, contacta a nuestro equipo de soporte.</p>
+          </div>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} AgroStock. Todos los derechos reservados.</p>
+            <p>Este es un email automático, por favor no respondas.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return await this.sendEmail({
+      to: email,
+      subject: "🔐 Recuperación de Contraseña - AgroStock",
+      html: html,
+      text: `Hola ${nombre},\n\nRecibimos una solicitud para restablecer tu contraseña.\n\nVisita: ${recoveryUrl}\n\nEste enlace expira en 1 hora.\n\nSi no solicitaste este cambio, ignora este email.`
+    });
+  }
+
   private getRolActions(rol: string): string {
     switch (rol) {
       case 'admin':
